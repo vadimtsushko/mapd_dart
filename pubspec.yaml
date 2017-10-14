@@ -1,14 +1,11 @@
-description: "A sample command-line application."
+description: "MapD driver for Dart. Works both on server and in browser"
 name: "mapd"
 version: "0.0.1"
 dependencies:
-  http: "any"
-  logging: "any"
+  fixnum: "^0.10.2"
+  http: "^0.11.3"
+  logging: "^0.11.0"
   logging_handlers: "any"
-  thrift:
-    git:
-      ref: "6462b664aa6eb796135325dc11080aa0d8ab1184"
-      url: "https://bitbucket.org/iv_framework/thrift.git"
 dev_dependencies:
   test: "^0.12.0"
   browser: "any"

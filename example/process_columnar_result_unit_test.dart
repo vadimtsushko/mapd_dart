@@ -1,5 +1,5 @@
 import 'package:test/test.dart';
-import 'package:thrift/thrift.dart';
+import 'package:mapd/src/thrift/thrift.dart';
 
 main() {
   test('should process columnar results', () {

@@ -1,5 +1,5 @@
-import 'package:thrift/thrift.dart';
-import '../mapd.dart';
+import 'package:mapd/src/thrift/thrift.dart';
+import 'package:mapd/console.dart';
 import 'dart:convert';
 main() {
   var deserializer = new TDeserializer();

@@ -1,5 +1,5 @@
-import '../mapd.dart';
-import 'package:thrift/thrift.dart';
+import '../driver.dart';
+import 'package:mapd/src/thrift/thrift.dart';
 import 'dart:async';
 import 'package:logging/logging.dart';
 

@@ -7,8 +7,8 @@
 library mapd.src.t_render_property;
 
 import 'dart:typed_data' show Uint8List;
-import 'package:thrift/thrift.dart';
-import '../mapd.dart';
+import 'package:mapd/src/thrift/thrift.dart';
+import '../driver.dart';
 
 class TRenderProperty implements TBase {
   static final TStruct _STRUCT_DESC = new TStruct("TRenderProperty");

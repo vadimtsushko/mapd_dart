@@ -7,8 +7,8 @@
 library mapd.src.t_data_block_ptr;
 
 import 'dart:typed_data' show Uint8List;
-import 'package:thrift/thrift.dart';
-import '../mapd.dart';
+import 'package:mapd/src/thrift/thrift.dart';
+import '../driver.dart';
 
 class TDataBlockPtr implements TBase {
   static final TStruct _STRUCT_DESC = new TStruct("TDataBlockPtr");

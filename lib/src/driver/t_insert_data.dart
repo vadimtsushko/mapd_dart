@@ -7,8 +7,8 @@
 library mapd.src.t_insert_data;
 
 import 'dart:typed_data' show Uint8List;
-import 'package:thrift/thrift.dart';
-import '../mapd.dart';
+import 'package:mapd/src/thrift/thrift.dart';
+import '../driver.dart';
 
 class TInsertData implements TBase {
   static final TStruct _STRUCT_DESC = new TStruct("TInsertData");

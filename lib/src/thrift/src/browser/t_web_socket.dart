@@ -25,7 +25,7 @@ import 'dart:html' show MessageEvent;
 import 'dart:html' show WebSocket;
 import 'dart:typed_data' show Uint8List;
 
-import 'package:thrift/thrift.dart';
+import 'package:mapd/src/thrift/thrift.dart';
 
 /// A [TSocket] backed by a [WebSocket] from dart:html
 class TWebSocket implements TSocket {
