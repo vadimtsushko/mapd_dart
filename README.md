@@ -1,3 +1,3 @@
-# mapd_connector
+# MapD driver for Dart. Works both on server and in browser
 
-A sample command-line application.
+
