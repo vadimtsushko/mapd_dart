@@ -1,4 +1,7 @@
 description: "MapD driver for Dart. Works both on server and in browser"
+authors:
+  - Vadim Tsushko <vadimtsushko@gmail.com>
+homepage: https://github.com/vadimtsushko/mapd_dart
 name: "mapd"
 version: "1.0.0"
 dependencies:
