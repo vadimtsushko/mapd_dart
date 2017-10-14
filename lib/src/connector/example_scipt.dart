@@ -1,10 +1,8 @@
 import 'connector.dart';
 
 runExample(MapdConnector connector) async {
-
   if (!await connector.connect()) {
-    print('Error connecting to MapD');
-    return;
+    throw new Exception('Error connecting to MapD');
   }
   var version = await connector.getVersion();
   print('Version: $version');
@@ -12,11 +10,12 @@ runExample(MapdConnector connector) async {
   var status = await connector.getServerStatus();
   print('Server status: $status');
 
-//  var memorySummary = await connector.getMemorySummary();
-//  print('Memory summary: $memorySummary');
+  /////// Currently breaks with error message:  Invalid method name: 'get_memory_summary'
+  //  var memorySummary = await connector.getMemorySummary();
+  //  print('Memory summary: $memorySummary');
 
-//  var memoryGPU = await connector.getMemoryGPU();
-//  print('Memory GPU: $memoryGPU');
+  //  var memoryGPU = await connector.getMemoryGPU();
+  //  print('Memory GPU: $memoryGPU');
 
   var tables = await connector.getTables();
   print('Tables: $tables');
@@ -27,8 +26,8 @@ runExample(MapdConnector connector) async {
     print('   col_name: ${each.col_name}, col_type: ${each.col_type}');
   }
 
-
-  const query = "SELECT carrier_name as key0, AVG(airtime) AS val FROM flights_2008_10k WHERE airtime IS NOT NULL GROUP BY key0 ORDER BY val DESC LIMIT 100";
+  const query =
+      "SELECT carrier_name as key0, AVG(airtime) AS val FROM flights_2008_10k WHERE airtime IS NOT NULL GROUP BY key0 ORDER BY val DESC LIMIT 100";
 
   var success = await connector.validateQuery(query);
 

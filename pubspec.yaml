@@ -1,6 +1,6 @@
 description: "MapD driver for Dart. Works both on server and in browser"
 name: "mapd"
-version: "0.0.1"
+version: "1.0.0"
 dependencies:
   fixnum: "^0.10.2"
   http: "^0.11.3"
