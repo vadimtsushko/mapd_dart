@@ -5,7 +5,6 @@ dependencies:
   fixnum: "^0.10.2"
   http: "^0.11.3"
   logging: "^0.11.0"
-  logging_handlers: "any"
 dev_dependencies:
   test: "^0.12.0"
   browser: "any"
