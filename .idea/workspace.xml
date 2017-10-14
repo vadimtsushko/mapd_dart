@@ -2,65 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="6237a758-245f-4d2a-8666-3f16feab815a" name="Default" comment="">
-      <change type="MOVED" beforePath="$PROJECT_DIR$/lib/src/mapd.dart" afterPath="$PROJECT_DIR$/lib/src/driver.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.gitignore" afterPath="$PROJECT_DIR$/.gitignore" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/libraries/Dart_Packages.xml" afterPath="$PROJECT_DIR$/.idea/libraries/Dart_Packages.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/modules.xml" afterPath="$PROJECT_DIR$/.idea/modules.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/example/process_columnar_result_unit_test.dart" afterPath="$PROJECT_DIR$/example/process_columnar_result_unit_test.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/example/serializer.dart" afterPath="$PROJECT_DIR$/example/serializer.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/example/some_queries.dart" afterPath="$PROJECT_DIR$/example/some_queries.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/browser.dart" afterPath="$PROJECT_DIR$/lib/browser.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/console.dart" afterPath="$PROJECT_DIR$/lib/console.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/connector/connector.dart" afterPath="$PROJECT_DIR$/lib/src/connector/connector.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/connector/connector_browser.dart" afterPath="$PROJECT_DIR$/lib/src/connector/connector_browser.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/connector/connector_console.dart" afterPath="$PROJECT_DIR$/lib/src/connector/connector_console.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/connector/query_result_processing.dart" afterPath="$PROJECT_DIR$/lib/src/connector/query_result_processing.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/map_d.dart" afterPath="$PROJECT_DIR$/lib/src/driver/map_d.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/t_column.dart" afterPath="$PROJECT_DIR$/lib/src/driver/t_column.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/t_column_data.dart" afterPath="$PROJECT_DIR$/lib/src/driver/t_column_data.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/t_column_range.dart" afterPath="$PROJECT_DIR$/lib/src/driver/t_column_range.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/t_column_type.dart" afterPath="$PROJECT_DIR$/lib/src/driver/t_column_type.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/t_copy_params.dart" afterPath="$PROJECT_DIR$/lib/src/driver/t_copy_params.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/t_data_block_ptr.dart" afterPath="$PROJECT_DIR$/lib/src/driver/t_data_block_ptr.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/t_data_frame.dart" afterPath="$PROJECT_DIR$/lib/src/driver/t_data_frame.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/t_datum.dart" afterPath="$PROJECT_DIR$/lib/src/driver/t_datum.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/t_datum_val.dart" afterPath="$PROJECT_DIR$/lib/src/driver/t_datum_val.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/t_detect_result.dart" afterPath="$PROJECT_DIR$/lib/src/driver/t_detect_result.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/t_dictionary_generation.dart" afterPath="$PROJECT_DIR$/lib/src/driver/t_dictionary_generation.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/t_frontend_view.dart" afterPath="$PROJECT_DIR$/lib/src/driver/t_frontend_view.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/t_gpu_memory_summary.dart" afterPath="$PROJECT_DIR$/lib/src/driver/t_gpu_memory_summary.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/t_import_status.dart" afterPath="$PROJECT_DIR$/lib/src/driver/t_import_status.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/t_insert_data.dart" afterPath="$PROJECT_DIR$/lib/src/driver/t_insert_data.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/t_map_d_exception.dart" afterPath="$PROJECT_DIR$/lib/src/driver/t_map_d_exception.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/t_memory_summary.dart" afterPath="$PROJECT_DIR$/lib/src/driver/t_memory_summary.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/t_pending_query.dart" afterPath="$PROJECT_DIR$/lib/src/driver/t_pending_query.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/t_pixel.dart" afterPath="$PROJECT_DIR$/lib/src/driver/t_pixel.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/t_pixel_result.dart" afterPath="$PROJECT_DIR$/lib/src/driver/t_pixel_result.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/t_pixel_row_result.dart" afterPath="$PROJECT_DIR$/lib/src/driver/t_pixel_row_result.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/t_pixel_rows.dart" afterPath="$PROJECT_DIR$/lib/src/driver/t_pixel_rows.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/t_pixel_table_row_result.dart" afterPath="$PROJECT_DIR$/lib/src/driver/t_pixel_table_row_result.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/t_query_result.dart" afterPath="$PROJECT_DIR$/lib/src/driver/t_query_result.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/t_raw_pixel_data_result.dart" afterPath="$PROJECT_DIR$/lib/src/driver/t_raw_pixel_data_result.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/t_raw_render_pass_data_result.dart" afterPath="$PROJECT_DIR$/lib/src/driver/t_raw_render_pass_data_result.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/t_render_property.dart" afterPath="$PROJECT_DIR$/lib/src/driver/t_render_property.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/t_render_result.dart" afterPath="$PROJECT_DIR$/lib/src/driver/t_render_result.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/t_row.dart" afterPath="$PROJECT_DIR$/lib/src/driver/t_row.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/t_row_set.dart" afterPath="$PROJECT_DIR$/lib/src/driver/t_row_set.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/t_server_status.dart" afterPath="$PROJECT_DIR$/lib/src/driver/t_server_status.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/t_step_result.dart" afterPath="$PROJECT_DIR$/lib/src/driver/t_step_result.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/t_string_row.dart" afterPath="$PROJECT_DIR$/lib/src/driver/t_string_row.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/t_string_value.dart" afterPath="$PROJECT_DIR$/lib/src/driver/t_string_value.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/t_table_details.dart" afterPath="$PROJECT_DIR$/lib/src/driver/t_table_details.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/t_table_generation.dart" afterPath="$PROJECT_DIR$/lib/src/driver/t_table_generation.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/t_type_info.dart" afterPath="$PROJECT_DIR$/lib/src/driver/t_type_info.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/t_var_len.dart" afterPath="$PROJECT_DIR$/lib/src/driver/t_var_len.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/driver/tdb_info.dart" afterPath="$PROJECT_DIR$/lib/src/driver/tdb_info.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/thrift/src/browser/t_web_socket.dart" afterPath="$PROJECT_DIR$/lib/src/thrift/src/browser/t_web_socket.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/thrift/src/console/t_tcp_socket.dart" afterPath="$PROJECT_DIR$/lib/src/thrift/src/console/t_tcp_socket.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/src/thrift/src/console/t_web_socket.dart" afterPath="$PROJECT_DIR$/lib/src/thrift/src/console/t_web_socket.dart" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/pubspec.yaml" afterPath="$PROJECT_DIR$/pubspec.yaml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/web/main.dart" afterPath="$PROJECT_DIR$/web/main.dart" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -1465,8 +1407,8 @@
       <file leaf-file-name="pubspec.yaml" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/pubspec.yaml">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="71" lean-forward="false" selection-start-line="0" selection-start-column="71" selection-end-line="0" selection-end-column="71" />
+            <state relative-caret-position="220">
+              <caret line="10" column="16" lean-forward="true" selection-start-line="10" selection-start-column="16" selection-end-line="10" selection-end-column="16" />
               <folding />
             </state>
           </provider>
@@ -1621,6 +1563,11 @@
             <path>
               <item name="mapd_dart" type="b2602c69:ProjectViewProjectNode" />
               <item name="mapd_dart" type="462c0819:PsiDirectoryNode" />
+              <item name=".idea" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="mapd_dart" type="b2602c69:ProjectViewProjectNode" />
+              <item name="mapd_dart" type="462c0819:PsiDirectoryNode" />
               <item name="lib" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
@@ -1758,14 +1705,23 @@
       <option name="presentableId" value="Default" />
       <updated>1507980443093</updated>
     </task>
+    <task id="LOCAL-00001" summary="Include thrift and mapd client libs into one monolytic driver package">
+      <created>1507982482210</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1507982482210</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
+    <editor active="true" />
     <layout>
       <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Messages" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.32936078" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.32936078" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="Palette&#9;" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="Image Layers" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="Capture Analysis" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
@@ -1794,6 +1750,10 @@
   </component>
   <component name="VcsContentAnnotationSettings">
     <option name="myLimit" value="2678400000" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Include thrift and mapd client libs into one monolytic driver package" />
+    <option name="LAST_COMMIT_MESSAGE" value="Include thrift and mapd client libs into one monolytic driver package" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager />
@@ -5056,8 +5016,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/pubspec.yaml">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="71" lean-forward="false" selection-start-line="0" selection-start-column="71" selection-end-line="0" selection-end-column="71" />
+        <state relative-caret-position="220">
+          <caret line="10" column="16" lean-forward="true" selection-start-line="10" selection-start-column="16" selection-end-line="10" selection-end-column="16" />
           <folding />
         </state>
       </provider>
