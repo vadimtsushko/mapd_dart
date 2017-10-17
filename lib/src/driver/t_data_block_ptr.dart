@@ -8,7 +8,7 @@ library mapd.src.t_data_block_ptr;
 
 import 'dart:typed_data' show Uint8List;
 import 'package:mapd/src/thrift/thrift.dart';
-import '../driver.dart';
+import 'package:mapd/src/driver.dart';
 
 class TDataBlockPtr implements TBase {
   static final TStruct _STRUCT_DESC = new TStruct("TDataBlockPtr");
@@ -115,13 +115,13 @@ class TDataBlockPtr implements TBase {
         case VAR_LEN_DATA:
           if (field.type == TType.LIST) {
             {
-              TList _list72 = iprot.readListBegin();
+              TList _list76 = iprot.readListBegin();
               this.var_len_data = new List<TVarLen>();
-              for (int _i73 = 0; _i73 < _list72.length; ++_i73) {
-                TVarLen _elem74;
-                _elem74 = new TVarLen();
-                _elem74.read(iprot);
-                this.var_len_data.add(_elem74);
+              for (int _i77 = 0; _i77 < _list76.length; ++_i77) {
+                TVarLen _elem78;
+                _elem78 = new TVarLen();
+                _elem78.read(iprot);
+                this.var_len_data.add(_elem78);
               }
               iprot.readListEnd();
             }
@@ -157,8 +157,8 @@ class TDataBlockPtr implements TBase {
         oprot.writeFieldBegin(_VAR_LEN_DATA_FIELD_DESC);
         {
           oprot.writeListBegin(new TList(TType.STRUCT, this.var_len_data.length));
-          for (var elem75 in this.var_len_data) {
-            elem75.write(oprot);
+          for (var elem79 in this.var_len_data) {
+            elem79.write(oprot);
           }
           oprot.writeListEnd();
         }

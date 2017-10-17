@@ -8,7 +8,7 @@ library mapd.src.t_query_result;
 
 import 'dart:typed_data' show Uint8List;
 import 'package:mapd/src/thrift/thrift.dart';
-import '../driver.dart';
+import 'package:mapd/src/driver.dart';
 
 class TQueryResult implements TBase {
   static final TStruct _STRUCT_DESC = new TStruct("TQueryResult");

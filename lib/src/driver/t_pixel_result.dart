@@ -8,7 +8,7 @@ library mapd.src.t_pixel_result;
 
 import 'dart:typed_data' show Uint8List;
 import 'package:mapd/src/thrift/thrift.dart';
-import '../driver.dart';
+import 'package:mapd/src/driver.dart';
 
 class TPixelResult implements TBase {
   static final TStruct _STRUCT_DESC = new TStruct("TPixelResult");

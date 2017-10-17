@@ -8,7 +8,7 @@ library mapd.src.t_data_frame;
 
 import 'dart:typed_data' show Uint8List;
 import 'package:mapd/src/thrift/thrift.dart';
-import '../driver.dart';
+import 'package:mapd/src/driver.dart';
 
 class TDataFrame implements TBase {
   static final TStruct _STRUCT_DESC = new TStruct("TDataFrame");

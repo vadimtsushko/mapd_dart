@@ -8,7 +8,7 @@ library mapd.src.t_server_status;
 
 import 'dart:typed_data' show Uint8List;
 import 'package:mapd/src/thrift/thrift.dart';
-import '../driver.dart';
+import 'package:mapd/src/driver.dart';
 
 class TServerStatus implements TBase {
   static final TStruct _STRUCT_DESC = new TStruct("TServerStatus");
@@ -17,6 +17,7 @@ class TServerStatus implements TBase {
   static final TField _RENDERING_ENABLED_FIELD_DESC = new TField("rendering_enabled", TType.BOOL, 3);
   static final TField _START_TIME_FIELD_DESC = new TField("start_time", TType.I64, 4);
   static final TField _EDITION_FIELD_DESC = new TField("edition", TType.STRING, 5);
+  static final TField _HOST_NAME_FIELD_DESC = new TField("host_name", TType.STRING, 6);
 
   bool _read_only = false;
   static const int READ_ONLY = 1;
@@ -28,6 +29,8 @@ class TServerStatus implements TBase {
   static const int START_TIME = 4;
   String _edition;
   static const int EDITION = 5;
+  String _host_name;
+  static const int HOST_NAME = 6;
 
   bool __isset_read_only = false;
   bool __isset_rendering_enabled = false;
@@ -104,6 +107,19 @@ class TServerStatus implements TBase {
     this.edition = null;
   }
 
+  // host_name
+  String get host_name => this._host_name;
+
+  set host_name(String host_name) {
+    this._host_name = host_name;
+  }
+
+  bool isSetHost_name() => this.host_name != null;
+
+  unsetHost_name() {
+    this.host_name = null;
+  }
+
   getFieldValue(int fieldID) {
     switch (fieldID) {
       case READ_ONLY:
@@ -116,6 +132,8 @@ class TServerStatus implements TBase {
         return this.start_time;
       case EDITION:
         return this.edition;
+      case HOST_NAME:
+        return this.host_name;
       default:
         throw new ArgumentError("Field $fieldID doesn't exist!");
     }
@@ -163,6 +181,14 @@ class TServerStatus implements TBase {
         }
         break;
 
+      case HOST_NAME:
+        if (value == null) {
+          unsetHost_name();
+        } else {
+          this.host_name = value;
+        }
+        break;
+
       default:
         throw new ArgumentError("Field $fieldID doesn't exist!");
     }
@@ -181,6 +207,8 @@ class TServerStatus implements TBase {
         return isSetStart_time();
       case EDITION:
         return isSetEdition();
+      case HOST_NAME:
+        return isSetHost_name();
       default:
         throw new ArgumentError("Field $fieldID doesn't exist!");
     }
@@ -233,6 +261,13 @@ class TServerStatus implements TBase {
             TProtocolUtil.skip(iprot, field.type);
           }
           break;
+        case HOST_NAME:
+          if (field.type == TType.STRING) {
+            this.host_name = iprot.readString();
+          } else {
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
         default:
           TProtocolUtil.skip(iprot, field.type);
           break;
@@ -268,6 +303,11 @@ class TServerStatus implements TBase {
       oprot.writeString(this.edition);
       oprot.writeFieldEnd();
     }
+    if (this.host_name != null) {
+      oprot.writeFieldBegin(_HOST_NAME_FIELD_DESC);
+      oprot.writeString(this.host_name);
+      oprot.writeFieldEnd();
+    }
     oprot.writeFieldStop();
     oprot.writeStructEnd();
   }
@@ -300,6 +340,14 @@ class TServerStatus implements TBase {
       ret.write("null");
     } else {
       ret.write(this.edition);
+    }
+
+    ret.write(", ");
+    ret.write("host_name:");
+    if (this.host_name == null) {
+      ret.write("null");
+    } else {
+      ret.write(this.host_name);
     }
 
     ret.write(")");

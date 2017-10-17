@@ -8,7 +8,7 @@ library mapd.src.t_raw_render_pass_data_result;
 
 import 'dart:typed_data' show Uint8List;
 import 'package:mapd/src/thrift/thrift.dart';
-import '../driver.dart';
+import 'package:mapd/src/driver.dart';
 
 class TRawRenderPassDataResult implements TBase {
   static final TStruct _STRUCT_DESC = new TStruct("TRawRenderPassDataResult");
@@ -17,7 +17,6 @@ class TRawRenderPassDataResult implements TBase {
   static final TField _ROW_IDS__A_FIELD_DESC = new TField("row_ids_A", TType.STRING, 3);
   static final TField _ROW_IDS__B_FIELD_DESC = new TField("row_ids_B", TType.STRING, 4);
   static final TField _TABLE_IDS_FIELD_DESC = new TField("table_ids", TType.STRING, 5);
-  static final TField _ACCUM_DATA_FIELD_DESC = new TField("accum_data", TType.STRING, 6);
 
   int _num_channels = 0;
   static const int NUM_CHANNELS = 1;
@@ -29,8 +28,6 @@ class TRawRenderPassDataResult implements TBase {
   static const int ROW_IDS_B = 4;
   Uint8List _table_ids;
   static const int TABLE_IDS = 5;
-  Uint8List _accum_data;
-  static const int ACCUM_DATA = 6;
 
   bool __isset_num_channels = false;
 
@@ -103,19 +100,6 @@ class TRawRenderPassDataResult implements TBase {
     this.table_ids = null;
   }
 
-  // accum_data
-  Uint8List get accum_data => this._accum_data;
-
-  set accum_data(Uint8List accum_data) {
-    this._accum_data = accum_data;
-  }
-
-  bool isSetAccum_data() => this.accum_data != null;
-
-  unsetAccum_data() {
-    this.accum_data = null;
-  }
-
   getFieldValue(int fieldID) {
     switch (fieldID) {
       case NUM_CHANNELS:
@@ -128,8 +112,6 @@ class TRawRenderPassDataResult implements TBase {
         return this.row_ids_B;
       case TABLE_IDS:
         return this.table_ids;
-      case ACCUM_DATA:
-        return this.accum_data;
       default:
         throw new ArgumentError("Field $fieldID doesn't exist!");
     }
@@ -177,14 +159,6 @@ class TRawRenderPassDataResult implements TBase {
         }
         break;
 
-      case ACCUM_DATA:
-        if (value == null) {
-          unsetAccum_data();
-        } else {
-          this.accum_data = value;
-        }
-        break;
-
       default:
         throw new ArgumentError("Field $fieldID doesn't exist!");
     }
@@ -203,8 +177,6 @@ class TRawRenderPassDataResult implements TBase {
         return isSetRow_ids_B();
       case TABLE_IDS:
         return isSetTable_ids();
-      case ACCUM_DATA:
-        return isSetAccum_data();
       default:
         throw new ArgumentError("Field $fieldID doesn't exist!");
     }
@@ -255,13 +227,6 @@ class TRawRenderPassDataResult implements TBase {
             TProtocolUtil.skip(iprot, field.type);
           }
           break;
-        case ACCUM_DATA:
-          if (field.type == TType.STRING) {
-            this.accum_data = iprot.readBinary();
-          } else {
-            TProtocolUtil.skip(iprot, field.type);
-          }
-          break;
         default:
           TProtocolUtil.skip(iprot, field.type);
           break;
@@ -301,11 +266,6 @@ class TRawRenderPassDataResult implements TBase {
       oprot.writeBinary(this.table_ids);
       oprot.writeFieldEnd();
     }
-    if (this.accum_data != null) {
-      oprot.writeFieldBegin(_ACCUM_DATA_FIELD_DESC);
-      oprot.writeBinary(this.accum_data);
-      oprot.writeFieldEnd();
-    }
     oprot.writeFieldStop();
     oprot.writeStructEnd();
   }
@@ -343,14 +303,6 @@ class TRawRenderPassDataResult implements TBase {
     ret.write(", ");
     ret.write("table_ids:");
     if (this.table_ids == null) {
-      ret.write("null");
-    } else {
-      ret.write("BINARY");
-    }
-
-    ret.write(", ");
-    ret.write("accum_data:");
-    if (this.accum_data == null) {
       ret.write("null");
     } else {
       ret.write("BINARY");

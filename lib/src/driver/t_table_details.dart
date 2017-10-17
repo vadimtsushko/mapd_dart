@@ -8,7 +8,7 @@ library mapd.src.t_table_details;
 
 import 'dart:typed_data' show Uint8List;
 import 'package:mapd/src/thrift/thrift.dart';
-import '../driver.dart';
+import 'package:mapd/src/driver.dart';
 
 class TTableDetails implements TBase {
   static final TStruct _STRUCT_DESC = new TStruct("TTableDetails");
@@ -286,13 +286,13 @@ class TTableDetails implements TBase {
         case ROW_DESC:
           if (field.type == TType.LIST) {
             {
-              TList _list56 = iprot.readListBegin();
+              TList _list60 = iprot.readListBegin();
               this.row_desc = new List<TColumnType>();
-              for (int _i57 = 0; _i57 < _list56.length; ++_i57) {
-                TColumnType _elem58;
-                _elem58 = new TColumnType();
-                _elem58.read(iprot);
-                this.row_desc.add(_elem58);
+              for (int _i61 = 0; _i61 < _list60.length; ++_i61) {
+                TColumnType _elem62;
+                _elem62 = new TColumnType();
+                _elem62.read(iprot);
+                this.row_desc.add(_elem62);
               }
               iprot.readListEnd();
             }
@@ -374,8 +374,8 @@ class TTableDetails implements TBase {
       oprot.writeFieldBegin(_ROW_DESC_FIELD_DESC);
       {
         oprot.writeListBegin(new TList(TType.STRUCT, this.row_desc.length));
-        for (var elem59 in this.row_desc) {
-          elem59.write(oprot);
+        for (var elem63 in this.row_desc) {
+          elem63.write(oprot);
         }
         oprot.writeListEnd();
       }

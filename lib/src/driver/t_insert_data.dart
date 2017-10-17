@@ -8,7 +8,7 @@ library mapd.src.t_insert_data;
 
 import 'dart:typed_data' show Uint8List;
 import 'package:mapd/src/thrift/thrift.dart';
-import '../driver.dart';
+import 'package:mapd/src/driver.dart';
 
 class TInsertData implements TBase {
   static final TStruct _STRUCT_DESC = new TStruct("TInsertData");
@@ -214,12 +214,12 @@ class TInsertData implements TBase {
         case COLUMN_IDS:
           if (field.type == TType.LIST) {
             {
-              TList _list76 = iprot.readListBegin();
+              TList _list80 = iprot.readListBegin();
               this.column_ids = new List<int>();
-              for (int _i77 = 0; _i77 < _list76.length; ++_i77) {
-                int _elem78;
-                _elem78 = iprot.readI32();
-                this.column_ids.add(_elem78);
+              for (int _i81 = 0; _i81 < _list80.length; ++_i81) {
+                int _elem82;
+                _elem82 = iprot.readI32();
+                this.column_ids.add(_elem82);
               }
               iprot.readListEnd();
             }
@@ -230,13 +230,13 @@ class TInsertData implements TBase {
         case DATA:
           if (field.type == TType.LIST) {
             {
-              TList _list79 = iprot.readListBegin();
+              TList _list83 = iprot.readListBegin();
               this.data = new List<TDataBlockPtr>();
-              for (int _i80 = 0; _i80 < _list79.length; ++_i80) {
-                TDataBlockPtr _elem81;
-                _elem81 = new TDataBlockPtr();
-                _elem81.read(iprot);
-                this.data.add(_elem81);
+              for (int _i84 = 0; _i84 < _list83.length; ++_i84) {
+                TDataBlockPtr _elem85;
+                _elem85 = new TDataBlockPtr();
+                _elem85.read(iprot);
+                this.data.add(_elem85);
               }
               iprot.readListEnd();
             }
@@ -278,8 +278,8 @@ class TInsertData implements TBase {
       oprot.writeFieldBegin(_COLUMN_IDS_FIELD_DESC);
       {
         oprot.writeListBegin(new TList(TType.I32, this.column_ids.length));
-        for (var elem82 in this.column_ids) {
-          oprot.writeI32(elem82);
+        for (var elem86 in this.column_ids) {
+          oprot.writeI32(elem86);
         }
         oprot.writeListEnd();
       }
@@ -289,8 +289,8 @@ class TInsertData implements TBase {
       oprot.writeFieldBegin(_DATA_FIELD_DESC);
       {
         oprot.writeListBegin(new TList(TType.STRUCT, this.data.length));
-        for (var elem83 in this.data) {
-          elem83.write(oprot);
+        for (var elem87 in this.data) {
+          elem87.write(oprot);
         }
         oprot.writeListEnd();
       }

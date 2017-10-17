@@ -1,4 +1,4 @@
-import 'connector.dart';
+import 'package:mapd/common.dart';
 
 runExample(MapdConnector connector) async {
   if (!await connector.connect()) {
@@ -10,12 +10,19 @@ runExample(MapdConnector connector) async {
   var status = await connector.getServerStatus();
   print('Server status: $status');
 
+
+  for (var each in await connector.getMemory('GPU')) {
+    print('  =>  max_num_pages: ${each.max_num_pages},num_pages_allocated: ${each.num_pages_allocated},page_size: ${each.page_size} ');
+  }
+
   /////// Currently breaks with error message:  Invalid method name: 'get_memory_summary'
   //  var memorySummary = await connector.getMemorySummary();
   //  print('Memory summary: $memorySummary');
 
   //  var memoryGPU = await connector.getMemoryGPU();
   //  print('Memory GPU: $memoryGPU');
+
+//  print(await connector.getMemoryCPU());
 
   var tables = await connector.getTables();
   print('Tables: $tables');

@@ -64,17 +64,25 @@ class MapdConnector {
   }
 
 
-/////////// Похоже эти методы не поддерживаются, а жаль
-  Future<TMemorySummary> getMemorySummary() async {
-    checkConnection();
-    return client.get_memory_summary(session);
-  }
+///////////// Похоже эти методы не поддерживаются, а жаль
+//  Future<TMemorySummary> getMemorySummary() async {
+//    checkConnection();
+//    return client.get_memory_summary(session);
+//  }
 
-  Future<String> getMemoryGPU() async {
+//  Future<String> getMemoryGPU() async {
+//    checkConnection();
+//    return client.get_memory_gpu(session);
+//  }
+//
+//  Future<String> getMemoryCPU() async {
+//    checkConnection();
+//    return client.get_memory_cpu(session);
+//  }
+  Future<List<TNodeMemoryInfo>> getMemory(String memoryLevel) async {
     checkConnection();
-    return client.get_memory_gpu(session);
+    return client.get_memory(session, memoryLevel);
   }
-
 
 
   Future<List<String>> getTables() async {
@@ -97,7 +105,7 @@ class MapdConnector {
   query(String query, {bool columnFormat: true, int limit: -1, bool eliminateNullRows: false}) async {
     checkConnection();
     var data = await client.sql_execute(
-        session, query, columnFormat, _getNonce(), limit);
+        session, query, columnFormat, _getNonce(), limit, -1);
     if (columnFormat) {
       return processColumnarResults(data, eliminateNullRows);
     } else {

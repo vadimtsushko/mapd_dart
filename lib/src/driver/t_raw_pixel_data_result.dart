@@ -8,7 +8,7 @@ library mapd.src.t_raw_pixel_data_result;
 
 import 'dart:typed_data' show Uint8List;
 import 'package:mapd/src/thrift/thrift.dart';
-import '../driver.dart';
+import 'package:mapd/src/driver.dart';
 
 class TRawPixelDataResult implements TBase {
   static final TStruct _STRUCT_DESC = new TStruct("TRawPixelDataResult");
@@ -246,15 +246,15 @@ class TRawPixelDataResult implements TBase {
         case RENDER_PASS_MAP:
           if (field.type == TType.MAP) {
             {
-              TMap _map84 = iprot.readMapBegin();
+              TMap _map88 = iprot.readMapBegin();
               this.render_pass_map = new Map<int, TRawRenderPassDataResult>();
-              for (int _i85 = 0; _i85 < _map84.length; ++_i85) {
-                int _key86;
-                TRawRenderPassDataResult _val87;
-                _key86 = iprot.readI32();
-                _val87 = new TRawRenderPassDataResult();
-                _val87.read(iprot);
-                this.render_pass_map[_key86] = _val87;
+              for (int _i89 = 0; _i89 < _map88.length; ++_i89) {
+                int _key90;
+                TRawRenderPassDataResult _val91;
+                _key90 = iprot.readI32();
+                _val91 = new TRawRenderPassDataResult();
+                _val91.read(iprot);
+                this.render_pass_map[_key90] = _val91;
               }
               iprot.readMapEnd();
             }
@@ -312,9 +312,9 @@ class TRawPixelDataResult implements TBase {
       oprot.writeFieldBegin(_RENDER_PASS_MAP_FIELD_DESC);
       {
         oprot.writeMapBegin(new TMap(TType.I32, TType.STRUCT, this.render_pass_map.length));
-        for (var elem89 in this.render_pass_map.keys) {
-          oprot.writeI32(elem89);
-          this.render_pass_map[elem89].write(oprot);
+        for (var elem93 in this.render_pass_map.keys) {
+          oprot.writeI32(elem93);
+          this.render_pass_map[elem93].write(oprot);
         }
         oprot.writeMapEnd();
       }

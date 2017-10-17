@@ -9,7 +9,7 @@ library mapd.src.map_d;
 import 'dart:async';
 import 'dart:typed_data' show Uint8List;
 import 'package:mapd/src/thrift/thrift.dart';
-import '../driver.dart';
+import 'package:mapd/src/driver.dart';
 
 
 abstract class MapD {
@@ -19,6 +19,8 @@ abstract class MapD {
   Future disconnect(String session);
 
   Future<TServerStatus> get_server_status(String session);
+
+  Future<List<TServerStatus>> get_status(String session);
 
   Future<List<String>> get_tables(String session);
 
@@ -38,19 +40,17 @@ abstract class MapD {
 
   Future<String> get_heap_profile(String session);
 
-  Future<String> get_memory_gpu(String session);
-
-  Future<String> get_memory_cpu(String session);
-
-  Future<TMemorySummary> get_memory_summary(String session);
+  Future<List<TNodeMemoryInfo>> get_memory(String session, String memory_level);
 
   Future clear_cpu_memory(String session);
 
   Future clear_gpu_memory(String session);
 
-  Future rollback_table_epoch(String session, int db_id, int table_id, int new_epoch);
+  Future set_table_epoch(String session, int db_id, int table_id, int new_epoch);
 
-  Future<TQueryResult> sql_execute(String session, String query, bool column_format, String nonce, int first_n);
+  Future<int> get_table_epoch(String session, int db_id, int table_id);
+
+  Future<TQueryResult> sql_execute(String session, String query, bool column_format, String nonce, int first_n, int at_most_n);
 
   Future<TDataFrame> sql_execute_df(String session, String query, int device_type, int device_id, int first_n);
 
@@ -79,6 +79,10 @@ abstract class MapD {
   Future<String> create_link(String session, String view_state, String view_metadata);
 
   Future load_table_binary(String session, String table_name, List<TRow> rows);
+
+  Future load_table_binary_columnar(String session, String table_name, List<TColumn> cols);
+
+  Future load_table_binary_arrow(String session, String table_name, Uint8List arrow_stream);
 
   Future load_table(String session, String table_name, List<TStringRow> rows);
 
@@ -217,6 +221,35 @@ class MapDClient implements MapD {
       throw result.e;
     }
     throw new TApplicationError(TApplicationErrorType.MISSING_RESULT, "get_server_status failed: unknown result");
+  }
+
+  Future<List<TServerStatus>> get_status(String session) async {
+    oprot.writeMessageBegin(new TMessage("get_status", TMessageType.CALL, nextSeqid()));
+    get_status_args args = new get_status_args();
+    args.session = session;
+    args.write(oprot);
+    oprot.writeMessageEnd();
+
+    await oprot.transport.flush();
+
+    TMessage msg = iprot.readMessageBegin();
+    if (msg.type == TMessageType.EXCEPTION) {
+      TApplicationError error = TApplicationError.read(iprot);
+      iprot.readMessageEnd();
+      throw error;
+    }
+
+    get_status_result result = new get_status_result();
+    result.read(iprot);
+    iprot.readMessageEnd();
+    if (result.isSetSuccess()) {
+      return result.success;
+    }
+
+    if (result.e != null) {
+      throw result.e;
+    }
+    throw new TApplicationError(TApplicationErrorType.MISSING_RESULT, "get_status failed: unknown result");
   }
 
   Future<List<String>> get_tables(String session) async {
@@ -473,10 +506,11 @@ class MapDClient implements MapD {
     throw new TApplicationError(TApplicationErrorType.MISSING_RESULT, "get_heap_profile failed: unknown result");
   }
 
-  Future<String> get_memory_gpu(String session) async {
-    oprot.writeMessageBegin(new TMessage("get_memory_gpu", TMessageType.CALL, nextSeqid()));
-    get_memory_gpu_args args = new get_memory_gpu_args();
+  Future<List<TNodeMemoryInfo>> get_memory(String session, String memory_level) async {
+    oprot.writeMessageBegin(new TMessage("get_memory", TMessageType.CALL, nextSeqid()));
+    get_memory_args args = new get_memory_args();
     args.session = session;
+    args.memory_level = memory_level;
     args.write(oprot);
     oprot.writeMessageEnd();
 
@@ -489,7 +523,7 @@ class MapDClient implements MapD {
       throw error;
     }
 
-    get_memory_gpu_result result = new get_memory_gpu_result();
+    get_memory_result result = new get_memory_result();
     result.read(iprot);
     iprot.readMessageEnd();
     if (result.isSetSuccess()) {
@@ -499,65 +533,7 @@ class MapDClient implements MapD {
     if (result.e != null) {
       throw result.e;
     }
-    throw new TApplicationError(TApplicationErrorType.MISSING_RESULT, "get_memory_gpu failed: unknown result");
-  }
-
-  Future<String> get_memory_cpu(String session) async {
-    oprot.writeMessageBegin(new TMessage("get_memory_cpu", TMessageType.CALL, nextSeqid()));
-    get_memory_cpu_args args = new get_memory_cpu_args();
-    args.session = session;
-    args.write(oprot);
-    oprot.writeMessageEnd();
-
-    await oprot.transport.flush();
-
-    TMessage msg = iprot.readMessageBegin();
-    if (msg.type == TMessageType.EXCEPTION) {
-      TApplicationError error = TApplicationError.read(iprot);
-      iprot.readMessageEnd();
-      throw error;
-    }
-
-    get_memory_cpu_result result = new get_memory_cpu_result();
-    result.read(iprot);
-    iprot.readMessageEnd();
-    if (result.isSetSuccess()) {
-      return result.success;
-    }
-
-    if (result.e != null) {
-      throw result.e;
-    }
-    throw new TApplicationError(TApplicationErrorType.MISSING_RESULT, "get_memory_cpu failed: unknown result");
-  }
-
-  Future<TMemorySummary> get_memory_summary(String session) async {
-    oprot.writeMessageBegin(new TMessage("get_memory_summary", TMessageType.CALL, nextSeqid()));
-    get_memory_summary_args args = new get_memory_summary_args();
-    args.session = session;
-    args.write(oprot);
-    oprot.writeMessageEnd();
-
-    await oprot.transport.flush();
-
-    TMessage msg = iprot.readMessageBegin();
-    if (msg.type == TMessageType.EXCEPTION) {
-      TApplicationError error = TApplicationError.read(iprot);
-      iprot.readMessageEnd();
-      throw error;
-    }
-
-    get_memory_summary_result result = new get_memory_summary_result();
-    result.read(iprot);
-    iprot.readMessageEnd();
-    if (result.isSetSuccess()) {
-      return result.success;
-    }
-
-    if (result.e != null) {
-      throw result.e;
-    }
-    throw new TApplicationError(TApplicationErrorType.MISSING_RESULT, "get_memory_summary failed: unknown result");
+    throw new TApplicationError(TApplicationErrorType.MISSING_RESULT, "get_memory failed: unknown result");
   }
 
   Future clear_cpu_memory(String session) async {
@@ -610,9 +586,9 @@ class MapDClient implements MapD {
     return;
   }
 
-  Future rollback_table_epoch(String session, int db_id, int table_id, int new_epoch) async {
-    oprot.writeMessageBegin(new TMessage("rollback_table_epoch", TMessageType.CALL, nextSeqid()));
-    rollback_table_epoch_args args = new rollback_table_epoch_args();
+  Future set_table_epoch(String session, int db_id, int table_id, int new_epoch) async {
+    oprot.writeMessageBegin(new TMessage("set_table_epoch", TMessageType.CALL, nextSeqid()));
+    set_table_epoch_args args = new set_table_epoch_args();
     args.session = session;
     args.db_id = db_id;
     args.table_id = table_id;
@@ -629,7 +605,7 @@ class MapDClient implements MapD {
       throw error;
     }
 
-    rollback_table_epoch_result result = new rollback_table_epoch_result();
+    set_table_epoch_result result = new set_table_epoch_result();
     result.read(iprot);
     iprot.readMessageEnd();
     if (result.e != null) {
@@ -638,7 +614,35 @@ class MapDClient implements MapD {
     return;
   }
 
-  Future<TQueryResult> sql_execute(String session, String query, bool column_format, String nonce, int first_n) async {
+  Future<int> get_table_epoch(String session, int db_id, int table_id) async {
+    oprot.writeMessageBegin(new TMessage("get_table_epoch", TMessageType.CALL, nextSeqid()));
+    get_table_epoch_args args = new get_table_epoch_args();
+    args.session = session;
+    args.db_id = db_id;
+    args.table_id = table_id;
+    args.write(oprot);
+    oprot.writeMessageEnd();
+
+    await oprot.transport.flush();
+
+    TMessage msg = iprot.readMessageBegin();
+    if (msg.type == TMessageType.EXCEPTION) {
+      TApplicationError error = TApplicationError.read(iprot);
+      iprot.readMessageEnd();
+      throw error;
+    }
+
+    get_table_epoch_result result = new get_table_epoch_result();
+    result.read(iprot);
+    iprot.readMessageEnd();
+    if (result.isSetSuccess()) {
+      return result.success;
+    }
+
+    throw new TApplicationError(TApplicationErrorType.MISSING_RESULT, "get_table_epoch failed: unknown result");
+  }
+
+  Future<TQueryResult> sql_execute(String session, String query, bool column_format, String nonce, int first_n, int at_most_n) async {
     oprot.writeMessageBegin(new TMessage("sql_execute", TMessageType.CALL, nextSeqid()));
     sql_execute_args args = new sql_execute_args();
     args.session = session;
@@ -646,6 +650,7 @@ class MapDClient implements MapD {
     args.column_format = column_format;
     args.nonce = nonce;
     args.first_n = first_n;
+    args.at_most_n = at_most_n;
     args.write(oprot);
     oprot.writeMessageEnd();
 
@@ -1079,6 +1084,60 @@ class MapDClient implements MapD {
     }
 
     load_table_binary_result result = new load_table_binary_result();
+    result.read(iprot);
+    iprot.readMessageEnd();
+    if (result.e != null) {
+      throw result.e;
+    }
+    return;
+  }
+
+  Future load_table_binary_columnar(String session, String table_name, List<TColumn> cols) async {
+    oprot.writeMessageBegin(new TMessage("load_table_binary_columnar", TMessageType.CALL, nextSeqid()));
+    load_table_binary_columnar_args args = new load_table_binary_columnar_args();
+    args.session = session;
+    args.table_name = table_name;
+    args.cols = cols;
+    args.write(oprot);
+    oprot.writeMessageEnd();
+
+    await oprot.transport.flush();
+
+    TMessage msg = iprot.readMessageBegin();
+    if (msg.type == TMessageType.EXCEPTION) {
+      TApplicationError error = TApplicationError.read(iprot);
+      iprot.readMessageEnd();
+      throw error;
+    }
+
+    load_table_binary_columnar_result result = new load_table_binary_columnar_result();
+    result.read(iprot);
+    iprot.readMessageEnd();
+    if (result.e != null) {
+      throw result.e;
+    }
+    return;
+  }
+
+  Future load_table_binary_arrow(String session, String table_name, Uint8List arrow_stream) async {
+    oprot.writeMessageBegin(new TMessage("load_table_binary_arrow", TMessageType.CALL, nextSeqid()));
+    load_table_binary_arrow_args args = new load_table_binary_arrow_args();
+    args.session = session;
+    args.table_name = table_name;
+    args.arrow_stream = arrow_stream;
+    args.write(oprot);
+    oprot.writeMessageEnd();
+
+    await oprot.transport.flush();
+
+    TMessage msg = iprot.readMessageBegin();
+    if (msg.type == TMessageType.EXCEPTION) {
+      TApplicationError error = TApplicationError.read(iprot);
+      iprot.readMessageEnd();
+      throw error;
+    }
+
+    load_table_binary_arrow_result result = new load_table_binary_arrow_result();
     result.read(iprot);
     iprot.readMessageEnd();
     if (result.e != null) {
@@ -1578,6 +1637,7 @@ class MapDProcessor implements TProcessor {
     PROCESS_MAP["connect"] = connect;
     PROCESS_MAP["disconnect"] = disconnect;
     PROCESS_MAP["get_server_status"] = get_server_status;
+    PROCESS_MAP["get_status"] = get_status;
     PROCESS_MAP["get_tables"] = get_tables;
     PROCESS_MAP["get_table_details"] = get_table_details;
     PROCESS_MAP["get_internal_table_details"] = get_internal_table_details;
@@ -1587,12 +1647,11 @@ class MapDProcessor implements TProcessor {
     PROCESS_MAP["start_heap_profile"] = start_heap_profile;
     PROCESS_MAP["stop_heap_profile"] = stop_heap_profile;
     PROCESS_MAP["get_heap_profile"] = get_heap_profile;
-    PROCESS_MAP["get_memory_gpu"] = get_memory_gpu;
-    PROCESS_MAP["get_memory_cpu"] = get_memory_cpu;
-    PROCESS_MAP["get_memory_summary"] = get_memory_summary;
+    PROCESS_MAP["get_memory"] = get_memory;
     PROCESS_MAP["clear_cpu_memory"] = clear_cpu_memory;
     PROCESS_MAP["clear_gpu_memory"] = clear_gpu_memory;
-    PROCESS_MAP["rollback_table_epoch"] = rollback_table_epoch;
+    PROCESS_MAP["set_table_epoch"] = set_table_epoch;
+    PROCESS_MAP["get_table_epoch"] = get_table_epoch;
     PROCESS_MAP["sql_execute"] = sql_execute;
     PROCESS_MAP["sql_execute_df"] = sql_execute_df;
     PROCESS_MAP["sql_execute_gdf"] = sql_execute_gdf;
@@ -1608,6 +1667,8 @@ class MapDProcessor implements TProcessor {
     PROCESS_MAP["get_link_view"] = get_link_view;
     PROCESS_MAP["create_link"] = create_link;
     PROCESS_MAP["load_table_binary"] = load_table_binary;
+    PROCESS_MAP["load_table_binary_columnar"] = load_table_binary_columnar;
+    PROCESS_MAP["load_table_binary_arrow"] = load_table_binary_arrow;
     PROCESS_MAP["load_table"] = load_table;
     PROCESS_MAP["detect_column_types"] = detect_column_types;
     PROCESS_MAP["create_table"] = create_table;
@@ -1713,6 +1774,30 @@ class MapDProcessor implements TProcessor {
       return;
     }
     oprot.writeMessageBegin(new TMessage("get_server_status", TMessageType.REPLY, seqid));
+    result.write(oprot);
+    oprot.writeMessageEnd();
+    oprot.transport.flush();
+  }
+
+  get_status(int seqid, TProtocol iprot, TProtocol oprot) async {
+    get_status_args args = new get_status_args();
+    args.read(iprot);
+    iprot.readMessageEnd();
+    get_status_result result = new get_status_result();
+    try {
+      result.success = await iface_.get_status(args.session);
+    } on TMapDException catch(e) {
+      result.e = e;
+    } catch (th) {
+      // Internal error
+      TApplicationError x = new TApplicationError(TApplicationErrorType.INTERNAL_ERROR, "Internal error processing get_status");
+      oprot.writeMessageBegin(new TMessage("get_status", TMessageType.EXCEPTION, seqid));
+      x.write(oprot);
+      oprot.writeMessageEnd();
+      oprot.transport.flush();
+      return;
+    }
+    oprot.writeMessageBegin(new TMessage("get_status", TMessageType.REPLY, seqid));
     result.write(oprot);
     oprot.writeMessageEnd();
     oprot.transport.flush();
@@ -1934,73 +2019,25 @@ class MapDProcessor implements TProcessor {
     oprot.transport.flush();
   }
 
-  get_memory_gpu(int seqid, TProtocol iprot, TProtocol oprot) async {
-    get_memory_gpu_args args = new get_memory_gpu_args();
+  get_memory(int seqid, TProtocol iprot, TProtocol oprot) async {
+    get_memory_args args = new get_memory_args();
     args.read(iprot);
     iprot.readMessageEnd();
-    get_memory_gpu_result result = new get_memory_gpu_result();
+    get_memory_result result = new get_memory_result();
     try {
-      result.success = await iface_.get_memory_gpu(args.session);
+      result.success = await iface_.get_memory(args.session, args.memory_level);
     } on TMapDException catch(e) {
       result.e = e;
     } catch (th) {
       // Internal error
-      TApplicationError x = new TApplicationError(TApplicationErrorType.INTERNAL_ERROR, "Internal error processing get_memory_gpu");
-      oprot.writeMessageBegin(new TMessage("get_memory_gpu", TMessageType.EXCEPTION, seqid));
+      TApplicationError x = new TApplicationError(TApplicationErrorType.INTERNAL_ERROR, "Internal error processing get_memory");
+      oprot.writeMessageBegin(new TMessage("get_memory", TMessageType.EXCEPTION, seqid));
       x.write(oprot);
       oprot.writeMessageEnd();
       oprot.transport.flush();
       return;
     }
-    oprot.writeMessageBegin(new TMessage("get_memory_gpu", TMessageType.REPLY, seqid));
-    result.write(oprot);
-    oprot.writeMessageEnd();
-    oprot.transport.flush();
-  }
-
-  get_memory_cpu(int seqid, TProtocol iprot, TProtocol oprot) async {
-    get_memory_cpu_args args = new get_memory_cpu_args();
-    args.read(iprot);
-    iprot.readMessageEnd();
-    get_memory_cpu_result result = new get_memory_cpu_result();
-    try {
-      result.success = await iface_.get_memory_cpu(args.session);
-    } on TMapDException catch(e) {
-      result.e = e;
-    } catch (th) {
-      // Internal error
-      TApplicationError x = new TApplicationError(TApplicationErrorType.INTERNAL_ERROR, "Internal error processing get_memory_cpu");
-      oprot.writeMessageBegin(new TMessage("get_memory_cpu", TMessageType.EXCEPTION, seqid));
-      x.write(oprot);
-      oprot.writeMessageEnd();
-      oprot.transport.flush();
-      return;
-    }
-    oprot.writeMessageBegin(new TMessage("get_memory_cpu", TMessageType.REPLY, seqid));
-    result.write(oprot);
-    oprot.writeMessageEnd();
-    oprot.transport.flush();
-  }
-
-  get_memory_summary(int seqid, TProtocol iprot, TProtocol oprot) async {
-    get_memory_summary_args args = new get_memory_summary_args();
-    args.read(iprot);
-    iprot.readMessageEnd();
-    get_memory_summary_result result = new get_memory_summary_result();
-    try {
-      result.success = await iface_.get_memory_summary(args.session);
-    } on TMapDException catch(e) {
-      result.e = e;
-    } catch (th) {
-      // Internal error
-      TApplicationError x = new TApplicationError(TApplicationErrorType.INTERNAL_ERROR, "Internal error processing get_memory_summary");
-      oprot.writeMessageBegin(new TMessage("get_memory_summary", TMessageType.EXCEPTION, seqid));
-      x.write(oprot);
-      oprot.writeMessageEnd();
-      oprot.transport.flush();
-      return;
-    }
-    oprot.writeMessageBegin(new TMessage("get_memory_summary", TMessageType.REPLY, seqid));
+    oprot.writeMessageBegin(new TMessage("get_memory", TMessageType.REPLY, seqid));
     result.write(oprot);
     oprot.writeMessageEnd();
     oprot.transport.flush();
@@ -2054,25 +2091,37 @@ class MapDProcessor implements TProcessor {
     oprot.transport.flush();
   }
 
-  rollback_table_epoch(int seqid, TProtocol iprot, TProtocol oprot) {
-    rollback_table_epoch_args args = new rollback_table_epoch_args();
+  set_table_epoch(int seqid, TProtocol iprot, TProtocol oprot) {
+    set_table_epoch_args args = new set_table_epoch_args();
     args.read(iprot);
     iprot.readMessageEnd();
-    rollback_table_epoch_result result = new rollback_table_epoch_result();
+    set_table_epoch_result result = new set_table_epoch_result();
     try {
-      iface_.rollback_table_epoch(args.session, args.db_id, args.table_id, args.new_epoch);
+      iface_.set_table_epoch(args.session, args.db_id, args.table_id, args.new_epoch);
     } on TMapDException catch(e) {
       result.e = e;
     } catch (th) {
       // Internal error
-      TApplicationError x = new TApplicationError(TApplicationErrorType.INTERNAL_ERROR, "Internal error processing rollback_table_epoch");
-      oprot.writeMessageBegin(new TMessage("rollback_table_epoch", TMessageType.EXCEPTION, seqid));
+      TApplicationError x = new TApplicationError(TApplicationErrorType.INTERNAL_ERROR, "Internal error processing set_table_epoch");
+      oprot.writeMessageBegin(new TMessage("set_table_epoch", TMessageType.EXCEPTION, seqid));
       x.write(oprot);
       oprot.writeMessageEnd();
       oprot.transport.flush();
       return;
     }
-    oprot.writeMessageBegin(new TMessage("rollback_table_epoch", TMessageType.REPLY, seqid));
+    oprot.writeMessageBegin(new TMessage("set_table_epoch", TMessageType.REPLY, seqid));
+    result.write(oprot);
+    oprot.writeMessageEnd();
+    oprot.transport.flush();
+  }
+
+  get_table_epoch(int seqid, TProtocol iprot, TProtocol oprot) async {
+    get_table_epoch_args args = new get_table_epoch_args();
+    args.read(iprot);
+    iprot.readMessageEnd();
+    get_table_epoch_result result = new get_table_epoch_result();
+    result.success = await iface_.get_table_epoch(args.session, args.db_id, args.table_id);
+    oprot.writeMessageBegin(new TMessage("get_table_epoch", TMessageType.REPLY, seqid));
     result.write(oprot);
     oprot.writeMessageEnd();
     oprot.transport.flush();
@@ -2084,7 +2133,7 @@ class MapDProcessor implements TProcessor {
     iprot.readMessageEnd();
     sql_execute_result result = new sql_execute_result();
     try {
-      result.success = await iface_.sql_execute(args.session, args.query, args.column_format, args.nonce, args.first_n);
+      result.success = await iface_.sql_execute(args.session, args.query, args.column_format, args.nonce, args.first_n, args.at_most_n);
     } on TMapDException catch(e) {
       result.e = e;
     } catch (th) {
@@ -2433,6 +2482,54 @@ class MapDProcessor implements TProcessor {
       return;
     }
     oprot.writeMessageBegin(new TMessage("load_table_binary", TMessageType.REPLY, seqid));
+    result.write(oprot);
+    oprot.writeMessageEnd();
+    oprot.transport.flush();
+  }
+
+  load_table_binary_columnar(int seqid, TProtocol iprot, TProtocol oprot) {
+    load_table_binary_columnar_args args = new load_table_binary_columnar_args();
+    args.read(iprot);
+    iprot.readMessageEnd();
+    load_table_binary_columnar_result result = new load_table_binary_columnar_result();
+    try {
+      iface_.load_table_binary_columnar(args.session, args.table_name, args.cols);
+    } on TMapDException catch(e) {
+      result.e = e;
+    } catch (th) {
+      // Internal error
+      TApplicationError x = new TApplicationError(TApplicationErrorType.INTERNAL_ERROR, "Internal error processing load_table_binary_columnar");
+      oprot.writeMessageBegin(new TMessage("load_table_binary_columnar", TMessageType.EXCEPTION, seqid));
+      x.write(oprot);
+      oprot.writeMessageEnd();
+      oprot.transport.flush();
+      return;
+    }
+    oprot.writeMessageBegin(new TMessage("load_table_binary_columnar", TMessageType.REPLY, seqid));
+    result.write(oprot);
+    oprot.writeMessageEnd();
+    oprot.transport.flush();
+  }
+
+  load_table_binary_arrow(int seqid, TProtocol iprot, TProtocol oprot) {
+    load_table_binary_arrow_args args = new load_table_binary_arrow_args();
+    args.read(iprot);
+    iprot.readMessageEnd();
+    load_table_binary_arrow_result result = new load_table_binary_arrow_result();
+    try {
+      iface_.load_table_binary_arrow(args.session, args.table_name, args.arrow_stream);
+    } on TMapDException catch(e) {
+      result.e = e;
+    } catch (th) {
+      // Internal error
+      TApplicationError x = new TApplicationError(TApplicationErrorType.INTERNAL_ERROR, "Internal error processing load_table_binary_arrow");
+      oprot.writeMessageBegin(new TMessage("load_table_binary_arrow", TMessageType.EXCEPTION, seqid));
+      x.write(oprot);
+      oprot.writeMessageEnd();
+      oprot.transport.flush();
+      return;
+    }
+    oprot.writeMessageBegin(new TMessage("load_table_binary_arrow", TMessageType.REPLY, seqid));
     result.write(oprot);
     oprot.writeMessageEnd();
     oprot.transport.flush();
@@ -3741,6 +3838,311 @@ class get_server_status_result implements TBase {
 
 }
 
+class get_status_args implements TBase {
+  static final TStruct _STRUCT_DESC = new TStruct("get_status_args");
+  static final TField _SESSION_FIELD_DESC = new TField("session", TType.STRING, 1);
+
+  String _session;
+  static const int SESSION = 1;
+
+
+  get_status_args() {
+  }
+
+  // session
+  String get session => this._session;
+
+  set session(String session) {
+    this._session = session;
+  }
+
+  bool isSetSession() => this.session != null;
+
+  unsetSession() {
+    this.session = null;
+  }
+
+  getFieldValue(int fieldID) {
+    switch (fieldID) {
+      case SESSION:
+        return this.session;
+      default:
+        throw new ArgumentError("Field $fieldID doesn't exist!");
+    }
+  }
+
+  setFieldValue(int fieldID, Object value) {
+    switch (fieldID) {
+      case SESSION:
+        if (value == null) {
+          unsetSession();
+        } else {
+          this.session = value;
+        }
+        break;
+
+      default:
+        throw new ArgumentError("Field $fieldID doesn't exist!");
+    }
+  }
+
+  // Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise
+  bool isSet(int fieldID) {
+    switch (fieldID) {
+      case SESSION:
+        return isSetSession();
+      default:
+        throw new ArgumentError("Field $fieldID doesn't exist!");
+    }
+  }
+
+  read(TProtocol iprot) {
+    TField field;
+    iprot.readStructBegin();
+    while (true) {
+      field = iprot.readFieldBegin();
+      if (field.type == TType.STOP) {
+        break;
+      }
+      switch (field.id) {
+        case SESSION:
+          if (field.type == TType.STRING) {
+            this.session = iprot.readString();
+          } else {
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        default:
+          TProtocolUtil.skip(iprot, field.type);
+          break;
+      }
+      iprot.readFieldEnd();
+    }
+    iprot.readStructEnd();
+
+    // check for required fields of primitive type, which can't be checked in the validate method
+    validate();
+  }
+
+  write(TProtocol oprot) {
+    validate();
+
+    oprot.writeStructBegin(_STRUCT_DESC);
+    if (this.session != null) {
+      oprot.writeFieldBegin(_SESSION_FIELD_DESC);
+      oprot.writeString(this.session);
+      oprot.writeFieldEnd();
+    }
+    oprot.writeFieldStop();
+    oprot.writeStructEnd();
+  }
+
+  String toString() {
+    StringBuffer ret = new StringBuffer("get_status_args(");
+
+    ret.write("session:");
+    if (this.session == null) {
+      ret.write("null");
+    } else {
+      ret.write(this.session);
+    }
+
+    ret.write(")");
+
+    return ret.toString();
+  }
+
+  validate() {
+    // check for required fields
+    // check that fields of type enum have valid values
+  }
+
+}
+
+class get_status_result implements TBase {
+  static final TStruct _STRUCT_DESC = new TStruct("get_status_result");
+  static final TField _SUCCESS_FIELD_DESC = new TField("success", TType.LIST, 0);
+  static final TField _E_FIELD_DESC = new TField("e", TType.STRUCT, 1);
+
+  List<TServerStatus> _success;
+  static const int SUCCESS = 0;
+  TMapDException _e;
+  static const int E = 1;
+
+
+  get_status_result() {
+  }
+
+  // success
+  List<TServerStatus> get success => this._success;
+
+  set success(List<TServerStatus> success) {
+    this._success = success;
+  }
+
+  bool isSetSuccess() => this.success != null;
+
+  unsetSuccess() {
+    this.success = null;
+  }
+
+  // e
+  TMapDException get e => this._e;
+
+  set e(TMapDException e) {
+    this._e = e;
+  }
+
+  bool isSetE() => this.e != null;
+
+  unsetE() {
+    this.e = null;
+  }
+
+  getFieldValue(int fieldID) {
+    switch (fieldID) {
+      case SUCCESS:
+        return this.success;
+      case E:
+        return this.e;
+      default:
+        throw new ArgumentError("Field $fieldID doesn't exist!");
+    }
+  }
+
+  setFieldValue(int fieldID, Object value) {
+    switch (fieldID) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          this.success = value;
+        }
+        break;
+
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          this.e = value;
+        }
+        break;
+
+      default:
+        throw new ArgumentError("Field $fieldID doesn't exist!");
+    }
+  }
+
+  // Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise
+  bool isSet(int fieldID) {
+    switch (fieldID) {
+      case SUCCESS:
+        return isSetSuccess();
+      case E:
+        return isSetE();
+      default:
+        throw new ArgumentError("Field $fieldID doesn't exist!");
+    }
+  }
+
+  read(TProtocol iprot) {
+    TField field;
+    iprot.readStructBegin();
+    while (true) {
+      field = iprot.readFieldBegin();
+      if (field.type == TType.STOP) {
+        break;
+      }
+      switch (field.id) {
+        case SUCCESS:
+          if (field.type == TType.LIST) {
+            {
+              TList _list94 = iprot.readListBegin();
+              this.success = new List<TServerStatus>();
+              for (int _i95 = 0; _i95 < _list94.length; ++_i95) {
+                TServerStatus _elem96;
+                _elem96 = new TServerStatus();
+                _elem96.read(iprot);
+                this.success.add(_elem96);
+              }
+              iprot.readListEnd();
+            }
+          } else {
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case E:
+          if (field.type == TType.STRUCT) {
+            this.e = new TMapDException();
+            this.e.read(iprot);
+          } else {
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        default:
+          TProtocolUtil.skip(iprot, field.type);
+          break;
+      }
+      iprot.readFieldEnd();
+    }
+    iprot.readStructEnd();
+
+    // check for required fields of primitive type, which can't be checked in the validate method
+    validate();
+  }
+
+  write(TProtocol oprot) {
+    oprot.writeStructBegin(_STRUCT_DESC);
+
+    if (this.isSetSuccess()) {
+      oprot.writeFieldBegin(_SUCCESS_FIELD_DESC);
+      {
+        oprot.writeListBegin(new TList(TType.STRUCT, this.success.length));
+        for (var elem97 in this.success) {
+          elem97.write(oprot);
+        }
+        oprot.writeListEnd();
+      }
+      oprot.writeFieldEnd();
+    } else if (this.isSetE()) {
+      oprot.writeFieldBegin(_E_FIELD_DESC);
+      this.e.write(oprot);
+      oprot.writeFieldEnd();
+    }
+    oprot.writeFieldStop();
+    oprot.writeStructEnd();
+  }
+
+  String toString() {
+    StringBuffer ret = new StringBuffer("get_status_result(");
+
+    ret.write("success:");
+    if (this.success == null) {
+      ret.write("null");
+    } else {
+      ret.write(this.success);
+    }
+
+    ret.write(", ");
+    ret.write("e:");
+    if (this.e == null) {
+      ret.write("null");
+    } else {
+      ret.write(this.e);
+    }
+
+    ret.write(")");
+
+    return ret.toString();
+  }
+
+  validate() {
+    // check for required fields
+    // check that fields of type enum have valid values
+  }
+
+}
+
 class get_tables_args implements TBase {
   static final TStruct _STRUCT_DESC = new TStruct("get_tables_args");
   static final TField _SESSION_FIELD_DESC = new TField("session", TType.STRING, 1);
@@ -3960,12 +4362,12 @@ class get_tables_result implements TBase {
         case SUCCESS:
           if (field.type == TType.LIST) {
             {
-              TList _list90 = iprot.readListBegin();
+              TList _list98 = iprot.readListBegin();
               this.success = new List<String>();
-              for (int _i91 = 0; _i91 < _list90.length; ++_i91) {
-                String _elem92;
-                _elem92 = iprot.readString();
-                this.success.add(_elem92);
+              for (int _i99 = 0; _i99 < _list98.length; ++_i99) {
+                String _elem100;
+                _elem100 = iprot.readString();
+                this.success.add(_elem100);
               }
               iprot.readListEnd();
             }
@@ -4000,8 +4402,8 @@ class get_tables_result implements TBase {
       oprot.writeFieldBegin(_SUCCESS_FIELD_DESC);
       {
         oprot.writeListBegin(new TList(TType.STRING, this.success.length));
-        for (var elem93 in this.success) {
-          oprot.writeString(elem93);
+        for (var elem101 in this.success) {
+          oprot.writeString(elem101);
         }
         oprot.writeListEnd();
       }
@@ -4940,12 +5342,12 @@ class get_users_result implements TBase {
         case SUCCESS:
           if (field.type == TType.LIST) {
             {
-              TList _list94 = iprot.readListBegin();
+              TList _list102 = iprot.readListBegin();
               this.success = new List<String>();
-              for (int _i95 = 0; _i95 < _list94.length; ++_i95) {
-                String _elem96;
-                _elem96 = iprot.readString();
-                this.success.add(_elem96);
+              for (int _i103 = 0; _i103 < _list102.length; ++_i103) {
+                String _elem104;
+                _elem104 = iprot.readString();
+                this.success.add(_elem104);
               }
               iprot.readListEnd();
             }
@@ -4980,8 +5382,8 @@ class get_users_result implements TBase {
       oprot.writeFieldBegin(_SUCCESS_FIELD_DESC);
       {
         oprot.writeListBegin(new TList(TType.STRING, this.success.length));
-        for (var elem97 in this.success) {
-          oprot.writeString(elem97);
+        for (var elem105 in this.success) {
+          oprot.writeString(elem105);
         }
         oprot.writeListEnd();
       }
@@ -5244,13 +5646,13 @@ class get_databases_result implements TBase {
         case SUCCESS:
           if (field.type == TType.LIST) {
             {
-              TList _list98 = iprot.readListBegin();
+              TList _list106 = iprot.readListBegin();
               this.success = new List<TDBInfo>();
-              for (int _i99 = 0; _i99 < _list98.length; ++_i99) {
-                TDBInfo _elem100;
-                _elem100 = new TDBInfo();
-                _elem100.read(iprot);
-                this.success.add(_elem100);
+              for (int _i107 = 0; _i107 < _list106.length; ++_i107) {
+                TDBInfo _elem108;
+                _elem108 = new TDBInfo();
+                _elem108.read(iprot);
+                this.success.add(_elem108);
               }
               iprot.readListEnd();
             }
@@ -5285,8 +5687,8 @@ class get_databases_result implements TBase {
       oprot.writeFieldBegin(_SUCCESS_FIELD_DESC);
       {
         oprot.writeListBegin(new TList(TType.STRUCT, this.success.length));
-        for (var elem101 in this.success) {
-          elem101.write(oprot);
+        for (var elem109 in this.success) {
+          elem109.write(oprot);
         }
         oprot.writeListEnd();
       }
@@ -6345,15 +6747,18 @@ class get_heap_profile_result implements TBase {
 
 }
 
-class get_memory_gpu_args implements TBase {
-  static final TStruct _STRUCT_DESC = new TStruct("get_memory_gpu_args");
+class get_memory_args implements TBase {
+  static final TStruct _STRUCT_DESC = new TStruct("get_memory_args");
   static final TField _SESSION_FIELD_DESC = new TField("session", TType.STRING, 1);
+  static final TField _MEMORY_LEVEL_FIELD_DESC = new TField("memory_level", TType.STRING, 2);
 
   String _session;
   static const int SESSION = 1;
+  String _memory_level;
+  static const int MEMORY_LEVEL = 2;
 
 
-  get_memory_gpu_args() {
+  get_memory_args() {
   }
 
   // session
@@ -6369,10 +6774,25 @@ class get_memory_gpu_args implements TBase {
     this.session = null;
   }
 
+  // memory_level
+  String get memory_level => this._memory_level;
+
+  set memory_level(String memory_level) {
+    this._memory_level = memory_level;
+  }
+
+  bool isSetMemory_level() => this.memory_level != null;
+
+  unsetMemory_level() {
+    this.memory_level = null;
+  }
+
   getFieldValue(int fieldID) {
     switch (fieldID) {
       case SESSION:
         return this.session;
+      case MEMORY_LEVEL:
+        return this.memory_level;
       default:
         throw new ArgumentError("Field $fieldID doesn't exist!");
     }
@@ -6388,6 +6808,14 @@ class get_memory_gpu_args implements TBase {
         }
         break;
 
+      case MEMORY_LEVEL:
+        if (value == null) {
+          unsetMemory_level();
+        } else {
+          this.memory_level = value;
+        }
+        break;
+
       default:
         throw new ArgumentError("Field $fieldID doesn't exist!");
     }
@@ -6398,6 +6826,8 @@ class get_memory_gpu_args implements TBase {
     switch (fieldID) {
       case SESSION:
         return isSetSession();
+      case MEMORY_LEVEL:
+        return isSetMemory_level();
       default:
         throw new ArgumentError("Field $fieldID doesn't exist!");
     }
@@ -6415,6 +6845,13 @@ class get_memory_gpu_args implements TBase {
         case SESSION:
           if (field.type == TType.STRING) {
             this.session = iprot.readString();
+          } else {
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case MEMORY_LEVEL:
+          if (field.type == TType.STRING) {
+            this.memory_level = iprot.readString();
           } else {
             TProtocolUtil.skip(iprot, field.type);
           }
@@ -6440,186 +6877,31 @@ class get_memory_gpu_args implements TBase {
       oprot.writeString(this.session);
       oprot.writeFieldEnd();
     }
+    if (this.memory_level != null) {
+      oprot.writeFieldBegin(_MEMORY_LEVEL_FIELD_DESC);
+      oprot.writeString(this.memory_level);
+      oprot.writeFieldEnd();
+    }
     oprot.writeFieldStop();
     oprot.writeStructEnd();
   }
 
   String toString() {
-    StringBuffer ret = new StringBuffer("get_memory_gpu_args(");
+    StringBuffer ret = new StringBuffer("get_memory_args(");
 
     ret.write("session:");
     if (this.session == null) {
       ret.write("null");
     } else {
       ret.write(this.session);
-    }
-
-    ret.write(")");
-
-    return ret.toString();
-  }
-
-  validate() {
-    // check for required fields
-    // check that fields of type enum have valid values
-  }
-
-}
-
-class get_memory_gpu_result implements TBase {
-  static final TStruct _STRUCT_DESC = new TStruct("get_memory_gpu_result");
-  static final TField _SUCCESS_FIELD_DESC = new TField("success", TType.STRING, 0);
-  static final TField _E_FIELD_DESC = new TField("e", TType.STRUCT, 1);
-
-  String _success;
-  static const int SUCCESS = 0;
-  TMapDException _e;
-  static const int E = 1;
-
-
-  get_memory_gpu_result() {
-  }
-
-  // success
-  String get success => this._success;
-
-  set success(String success) {
-    this._success = success;
-  }
-
-  bool isSetSuccess() => this.success != null;
-
-  unsetSuccess() {
-    this.success = null;
-  }
-
-  // e
-  TMapDException get e => this._e;
-
-  set e(TMapDException e) {
-    this._e = e;
-  }
-
-  bool isSetE() => this.e != null;
-
-  unsetE() {
-    this.e = null;
-  }
-
-  getFieldValue(int fieldID) {
-    switch (fieldID) {
-      case SUCCESS:
-        return this.success;
-      case E:
-        return this.e;
-      default:
-        throw new ArgumentError("Field $fieldID doesn't exist!");
-    }
-  }
-
-  setFieldValue(int fieldID, Object value) {
-    switch (fieldID) {
-      case SUCCESS:
-        if (value == null) {
-          unsetSuccess();
-        } else {
-          this.success = value;
-        }
-        break;
-
-      case E:
-        if (value == null) {
-          unsetE();
-        } else {
-          this.e = value;
-        }
-        break;
-
-      default:
-        throw new ArgumentError("Field $fieldID doesn't exist!");
-    }
-  }
-
-  // Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise
-  bool isSet(int fieldID) {
-    switch (fieldID) {
-      case SUCCESS:
-        return isSetSuccess();
-      case E:
-        return isSetE();
-      default:
-        throw new ArgumentError("Field $fieldID doesn't exist!");
-    }
-  }
-
-  read(TProtocol iprot) {
-    TField field;
-    iprot.readStructBegin();
-    while (true) {
-      field = iprot.readFieldBegin();
-      if (field.type == TType.STOP) {
-        break;
-      }
-      switch (field.id) {
-        case SUCCESS:
-          if (field.type == TType.STRING) {
-            this.success = iprot.readString();
-          } else {
-            TProtocolUtil.skip(iprot, field.type);
-          }
-          break;
-        case E:
-          if (field.type == TType.STRUCT) {
-            this.e = new TMapDException();
-            this.e.read(iprot);
-          } else {
-            TProtocolUtil.skip(iprot, field.type);
-          }
-          break;
-        default:
-          TProtocolUtil.skip(iprot, field.type);
-          break;
-      }
-      iprot.readFieldEnd();
-    }
-    iprot.readStructEnd();
-
-    // check for required fields of primitive type, which can't be checked in the validate method
-    validate();
-  }
-
-  write(TProtocol oprot) {
-    oprot.writeStructBegin(_STRUCT_DESC);
-
-    if (this.isSetSuccess()) {
-      oprot.writeFieldBegin(_SUCCESS_FIELD_DESC);
-      oprot.writeString(this.success);
-      oprot.writeFieldEnd();
-    } else if (this.isSetE()) {
-      oprot.writeFieldBegin(_E_FIELD_DESC);
-      this.e.write(oprot);
-      oprot.writeFieldEnd();
-    }
-    oprot.writeFieldStop();
-    oprot.writeStructEnd();
-  }
-
-  String toString() {
-    StringBuffer ret = new StringBuffer("get_memory_gpu_result(");
-
-    ret.write("success:");
-    if (this.success == null) {
-      ret.write("null");
-    } else {
-      ret.write(this.success);
     }
 
     ret.write(", ");
-    ret.write("e:");
-    if (this.e == null) {
+    ret.write("memory_level:");
+    if (this.memory_level == null) {
       ret.write("null");
     } else {
-      ret.write(this.e);
+      ret.write(this.memory_level);
     }
 
     ret.write(")");
@@ -6634,145 +6916,24 @@ class get_memory_gpu_result implements TBase {
 
 }
 
-class get_memory_cpu_args implements TBase {
-  static final TStruct _STRUCT_DESC = new TStruct("get_memory_cpu_args");
-  static final TField _SESSION_FIELD_DESC = new TField("session", TType.STRING, 1);
-
-  String _session;
-  static const int SESSION = 1;
-
-
-  get_memory_cpu_args() {
-  }
-
-  // session
-  String get session => this._session;
-
-  set session(String session) {
-    this._session = session;
-  }
-
-  bool isSetSession() => this.session != null;
-
-  unsetSession() {
-    this.session = null;
-  }
-
-  getFieldValue(int fieldID) {
-    switch (fieldID) {
-      case SESSION:
-        return this.session;
-      default:
-        throw new ArgumentError("Field $fieldID doesn't exist!");
-    }
-  }
-
-  setFieldValue(int fieldID, Object value) {
-    switch (fieldID) {
-      case SESSION:
-        if (value == null) {
-          unsetSession();
-        } else {
-          this.session = value;
-        }
-        break;
-
-      default:
-        throw new ArgumentError("Field $fieldID doesn't exist!");
-    }
-  }
-
-  // Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise
-  bool isSet(int fieldID) {
-    switch (fieldID) {
-      case SESSION:
-        return isSetSession();
-      default:
-        throw new ArgumentError("Field $fieldID doesn't exist!");
-    }
-  }
-
-  read(TProtocol iprot) {
-    TField field;
-    iprot.readStructBegin();
-    while (true) {
-      field = iprot.readFieldBegin();
-      if (field.type == TType.STOP) {
-        break;
-      }
-      switch (field.id) {
-        case SESSION:
-          if (field.type == TType.STRING) {
-            this.session = iprot.readString();
-          } else {
-            TProtocolUtil.skip(iprot, field.type);
-          }
-          break;
-        default:
-          TProtocolUtil.skip(iprot, field.type);
-          break;
-      }
-      iprot.readFieldEnd();
-    }
-    iprot.readStructEnd();
-
-    // check for required fields of primitive type, which can't be checked in the validate method
-    validate();
-  }
-
-  write(TProtocol oprot) {
-    validate();
-
-    oprot.writeStructBegin(_STRUCT_DESC);
-    if (this.session != null) {
-      oprot.writeFieldBegin(_SESSION_FIELD_DESC);
-      oprot.writeString(this.session);
-      oprot.writeFieldEnd();
-    }
-    oprot.writeFieldStop();
-    oprot.writeStructEnd();
-  }
-
-  String toString() {
-    StringBuffer ret = new StringBuffer("get_memory_cpu_args(");
-
-    ret.write("session:");
-    if (this.session == null) {
-      ret.write("null");
-    } else {
-      ret.write(this.session);
-    }
-
-    ret.write(")");
-
-    return ret.toString();
-  }
-
-  validate() {
-    // check for required fields
-    // check that fields of type enum have valid values
-  }
-
-}
-
-class get_memory_cpu_result implements TBase {
-  static final TStruct _STRUCT_DESC = new TStruct("get_memory_cpu_result");
-  static final TField _SUCCESS_FIELD_DESC = new TField("success", TType.STRING, 0);
+class get_memory_result implements TBase {
+  static final TStruct _STRUCT_DESC = new TStruct("get_memory_result");
+  static final TField _SUCCESS_FIELD_DESC = new TField("success", TType.LIST, 0);
   static final TField _E_FIELD_DESC = new TField("e", TType.STRUCT, 1);
 
-  String _success;
+  List<TNodeMemoryInfo> _success;
   static const int SUCCESS = 0;
   TMapDException _e;
   static const int E = 1;
 
 
-  get_memory_cpu_result() {
+  get_memory_result() {
   }
 
   // success
-  String get success => this._success;
+  List<TNodeMemoryInfo> get success => this._success;
 
-  set success(String success) {
+  set success(List<TNodeMemoryInfo> success) {
     this._success = success;
   }
 
@@ -6851,8 +7012,18 @@ class get_memory_cpu_result implements TBase {
       }
       switch (field.id) {
         case SUCCESS:
-          if (field.type == TType.STRING) {
-            this.success = iprot.readString();
+          if (field.type == TType.LIST) {
+            {
+              TList _list110 = iprot.readListBegin();
+              this.success = new List<TNodeMemoryInfo>();
+              for (int _i111 = 0; _i111 < _list110.length; ++_i111) {
+                TNodeMemoryInfo _elem112;
+                _elem112 = new TNodeMemoryInfo();
+                _elem112.read(iprot);
+                this.success.add(_elem112);
+              }
+              iprot.readListEnd();
+            }
           } else {
             TProtocolUtil.skip(iprot, field.type);
           }
@@ -6882,7 +7053,13 @@ class get_memory_cpu_result implements TBase {
 
     if (this.isSetSuccess()) {
       oprot.writeFieldBegin(_SUCCESS_FIELD_DESC);
-      oprot.writeString(this.success);
+      {
+        oprot.writeListBegin(new TList(TType.STRUCT, this.success.length));
+        for (var elem113 in this.success) {
+          elem113.write(oprot);
+        }
+        oprot.writeListEnd();
+      }
       oprot.writeFieldEnd();
     } else if (this.isSetE()) {
       oprot.writeFieldBegin(_E_FIELD_DESC);
@@ -6894,297 +7071,7 @@ class get_memory_cpu_result implements TBase {
   }
 
   String toString() {
-    StringBuffer ret = new StringBuffer("get_memory_cpu_result(");
-
-    ret.write("success:");
-    if (this.success == null) {
-      ret.write("null");
-    } else {
-      ret.write(this.success);
-    }
-
-    ret.write(", ");
-    ret.write("e:");
-    if (this.e == null) {
-      ret.write("null");
-    } else {
-      ret.write(this.e);
-    }
-
-    ret.write(")");
-
-    return ret.toString();
-  }
-
-  validate() {
-    // check for required fields
-    // check that fields of type enum have valid values
-  }
-
-}
-
-class get_memory_summary_args implements TBase {
-  static final TStruct _STRUCT_DESC = new TStruct("get_memory_summary_args");
-  static final TField _SESSION_FIELD_DESC = new TField("session", TType.STRING, 1);
-
-  String _session;
-  static const int SESSION = 1;
-
-
-  get_memory_summary_args() {
-  }
-
-  // session
-  String get session => this._session;
-
-  set session(String session) {
-    this._session = session;
-  }
-
-  bool isSetSession() => this.session != null;
-
-  unsetSession() {
-    this.session = null;
-  }
-
-  getFieldValue(int fieldID) {
-    switch (fieldID) {
-      case SESSION:
-        return this.session;
-      default:
-        throw new ArgumentError("Field $fieldID doesn't exist!");
-    }
-  }
-
-  setFieldValue(int fieldID, Object value) {
-    switch (fieldID) {
-      case SESSION:
-        if (value == null) {
-          unsetSession();
-        } else {
-          this.session = value;
-        }
-        break;
-
-      default:
-        throw new ArgumentError("Field $fieldID doesn't exist!");
-    }
-  }
-
-  // Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise
-  bool isSet(int fieldID) {
-    switch (fieldID) {
-      case SESSION:
-        return isSetSession();
-      default:
-        throw new ArgumentError("Field $fieldID doesn't exist!");
-    }
-  }
-
-  read(TProtocol iprot) {
-    TField field;
-    iprot.readStructBegin();
-    while (true) {
-      field = iprot.readFieldBegin();
-      if (field.type == TType.STOP) {
-        break;
-      }
-      switch (field.id) {
-        case SESSION:
-          if (field.type == TType.STRING) {
-            this.session = iprot.readString();
-          } else {
-            TProtocolUtil.skip(iprot, field.type);
-          }
-          break;
-        default:
-          TProtocolUtil.skip(iprot, field.type);
-          break;
-      }
-      iprot.readFieldEnd();
-    }
-    iprot.readStructEnd();
-
-    // check for required fields of primitive type, which can't be checked in the validate method
-    validate();
-  }
-
-  write(TProtocol oprot) {
-    validate();
-
-    oprot.writeStructBegin(_STRUCT_DESC);
-    if (this.session != null) {
-      oprot.writeFieldBegin(_SESSION_FIELD_DESC);
-      oprot.writeString(this.session);
-      oprot.writeFieldEnd();
-    }
-    oprot.writeFieldStop();
-    oprot.writeStructEnd();
-  }
-
-  String toString() {
-    StringBuffer ret = new StringBuffer("get_memory_summary_args(");
-
-    ret.write("session:");
-    if (this.session == null) {
-      ret.write("null");
-    } else {
-      ret.write(this.session);
-    }
-
-    ret.write(")");
-
-    return ret.toString();
-  }
-
-  validate() {
-    // check for required fields
-    // check that fields of type enum have valid values
-  }
-
-}
-
-class get_memory_summary_result implements TBase {
-  static final TStruct _STRUCT_DESC = new TStruct("get_memory_summary_result");
-  static final TField _SUCCESS_FIELD_DESC = new TField("success", TType.STRUCT, 0);
-  static final TField _E_FIELD_DESC = new TField("e", TType.STRUCT, 1);
-
-  TMemorySummary _success;
-  static const int SUCCESS = 0;
-  TMapDException _e;
-  static const int E = 1;
-
-
-  get_memory_summary_result() {
-  }
-
-  // success
-  TMemorySummary get success => this._success;
-
-  set success(TMemorySummary success) {
-    this._success = success;
-  }
-
-  bool isSetSuccess() => this.success != null;
-
-  unsetSuccess() {
-    this.success = null;
-  }
-
-  // e
-  TMapDException get e => this._e;
-
-  set e(TMapDException e) {
-    this._e = e;
-  }
-
-  bool isSetE() => this.e != null;
-
-  unsetE() {
-    this.e = null;
-  }
-
-  getFieldValue(int fieldID) {
-    switch (fieldID) {
-      case SUCCESS:
-        return this.success;
-      case E:
-        return this.e;
-      default:
-        throw new ArgumentError("Field $fieldID doesn't exist!");
-    }
-  }
-
-  setFieldValue(int fieldID, Object value) {
-    switch (fieldID) {
-      case SUCCESS:
-        if (value == null) {
-          unsetSuccess();
-        } else {
-          this.success = value;
-        }
-        break;
-
-      case E:
-        if (value == null) {
-          unsetE();
-        } else {
-          this.e = value;
-        }
-        break;
-
-      default:
-        throw new ArgumentError("Field $fieldID doesn't exist!");
-    }
-  }
-
-  // Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise
-  bool isSet(int fieldID) {
-    switch (fieldID) {
-      case SUCCESS:
-        return isSetSuccess();
-      case E:
-        return isSetE();
-      default:
-        throw new ArgumentError("Field $fieldID doesn't exist!");
-    }
-  }
-
-  read(TProtocol iprot) {
-    TField field;
-    iprot.readStructBegin();
-    while (true) {
-      field = iprot.readFieldBegin();
-      if (field.type == TType.STOP) {
-        break;
-      }
-      switch (field.id) {
-        case SUCCESS:
-          if (field.type == TType.STRUCT) {
-            this.success = new TMemorySummary();
-            this.success.read(iprot);
-          } else {
-            TProtocolUtil.skip(iprot, field.type);
-          }
-          break;
-        case E:
-          if (field.type == TType.STRUCT) {
-            this.e = new TMapDException();
-            this.e.read(iprot);
-          } else {
-            TProtocolUtil.skip(iprot, field.type);
-          }
-          break;
-        default:
-          TProtocolUtil.skip(iprot, field.type);
-          break;
-      }
-      iprot.readFieldEnd();
-    }
-    iprot.readStructEnd();
-
-    // check for required fields of primitive type, which can't be checked in the validate method
-    validate();
-  }
-
-  write(TProtocol oprot) {
-    oprot.writeStructBegin(_STRUCT_DESC);
-
-    if (this.isSetSuccess()) {
-      oprot.writeFieldBegin(_SUCCESS_FIELD_DESC);
-      this.success.write(oprot);
-      oprot.writeFieldEnd();
-    } else if (this.isSetE()) {
-      oprot.writeFieldBegin(_E_FIELD_DESC);
-      this.e.write(oprot);
-      oprot.writeFieldEnd();
-    }
-    oprot.writeFieldStop();
-    oprot.writeStructEnd();
-  }
-
-  String toString() {
-    StringBuffer ret = new StringBuffer("get_memory_summary_result(");
+    StringBuffer ret = new StringBuffer("get_memory_result(");
 
     ret.write("success:");
     if (this.success == null) {
@@ -7697,8 +7584,8 @@ class clear_gpu_memory_result implements TBase {
 
 }
 
-class rollback_table_epoch_args implements TBase {
-  static final TStruct _STRUCT_DESC = new TStruct("rollback_table_epoch_args");
+class set_table_epoch_args implements TBase {
+  static final TStruct _STRUCT_DESC = new TStruct("set_table_epoch_args");
   static final TField _SESSION_FIELD_DESC = new TField("session", TType.STRING, 1);
   static final TField _DB_ID_FIELD_DESC = new TField("db_id", TType.I32, 2);
   static final TField _TABLE_ID_FIELD_DESC = new TField("table_id", TType.I32, 3);
@@ -7717,7 +7604,7 @@ class rollback_table_epoch_args implements TBase {
   bool __isset_table_id = false;
   bool __isset_new_epoch = false;
 
-  rollback_table_epoch_args() {
+  set_table_epoch_args() {
   }
 
   // session
@@ -7920,7 +7807,7 @@ class rollback_table_epoch_args implements TBase {
   }
 
   String toString() {
-    StringBuffer ret = new StringBuffer("rollback_table_epoch_args(");
+    StringBuffer ret = new StringBuffer("set_table_epoch_args(");
 
     ret.write("session:");
     if (this.session == null) {
@@ -7953,15 +7840,15 @@ class rollback_table_epoch_args implements TBase {
 
 }
 
-class rollback_table_epoch_result implements TBase {
-  static final TStruct _STRUCT_DESC = new TStruct("rollback_table_epoch_result");
+class set_table_epoch_result implements TBase {
+  static final TStruct _STRUCT_DESC = new TStruct("set_table_epoch_result");
   static final TField _E_FIELD_DESC = new TField("e", TType.STRUCT, 1);
 
   TMapDException _e;
   static const int E = 1;
 
 
-  rollback_table_epoch_result() {
+  set_table_epoch_result() {
   }
 
   // e
@@ -8053,7 +7940,7 @@ class rollback_table_epoch_result implements TBase {
   }
 
   String toString() {
-    StringBuffer ret = new StringBuffer("rollback_table_epoch_result(");
+    StringBuffer ret = new StringBuffer("set_table_epoch_result(");
 
     ret.write("e:");
     if (this.e == null) {
@@ -8074,6 +7961,336 @@ class rollback_table_epoch_result implements TBase {
 
 }
 
+class get_table_epoch_args implements TBase {
+  static final TStruct _STRUCT_DESC = new TStruct("get_table_epoch_args");
+  static final TField _SESSION_FIELD_DESC = new TField("session", TType.STRING, 1);
+  static final TField _DB_ID_FIELD_DESC = new TField("db_id", TType.I32, 2);
+  static final TField _TABLE_ID_FIELD_DESC = new TField("table_id", TType.I32, 3);
+
+  String _session;
+  static const int SESSION = 1;
+  int _db_id = 0;
+  static const int DB_ID = 2;
+  int _table_id = 0;
+  static const int TABLE_ID = 3;
+
+  bool __isset_db_id = false;
+  bool __isset_table_id = false;
+
+  get_table_epoch_args() {
+  }
+
+  // session
+  String get session => this._session;
+
+  set session(String session) {
+    this._session = session;
+  }
+
+  bool isSetSession() => this.session != null;
+
+  unsetSession() {
+    this.session = null;
+  }
+
+  // db_id
+  int get db_id => this._db_id;
+
+  set db_id(int db_id) {
+    this._db_id = db_id;
+    this.__isset_db_id = true;
+  }
+
+  bool isSetDb_id() => this.__isset_db_id;
+
+  unsetDb_id() {
+    this.__isset_db_id = false;
+  }
+
+  // table_id
+  int get table_id => this._table_id;
+
+  set table_id(int table_id) {
+    this._table_id = table_id;
+    this.__isset_table_id = true;
+  }
+
+  bool isSetTable_id() => this.__isset_table_id;
+
+  unsetTable_id() {
+    this.__isset_table_id = false;
+  }
+
+  getFieldValue(int fieldID) {
+    switch (fieldID) {
+      case SESSION:
+        return this.session;
+      case DB_ID:
+        return this.db_id;
+      case TABLE_ID:
+        return this.table_id;
+      default:
+        throw new ArgumentError("Field $fieldID doesn't exist!");
+    }
+  }
+
+  setFieldValue(int fieldID, Object value) {
+    switch (fieldID) {
+      case SESSION:
+        if (value == null) {
+          unsetSession();
+        } else {
+          this.session = value;
+        }
+        break;
+
+      case DB_ID:
+        if (value == null) {
+          unsetDb_id();
+        } else {
+          this.db_id = value;
+        }
+        break;
+
+      case TABLE_ID:
+        if (value == null) {
+          unsetTable_id();
+        } else {
+          this.table_id = value;
+        }
+        break;
+
+      default:
+        throw new ArgumentError("Field $fieldID doesn't exist!");
+    }
+  }
+
+  // Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise
+  bool isSet(int fieldID) {
+    switch (fieldID) {
+      case SESSION:
+        return isSetSession();
+      case DB_ID:
+        return isSetDb_id();
+      case TABLE_ID:
+        return isSetTable_id();
+      default:
+        throw new ArgumentError("Field $fieldID doesn't exist!");
+    }
+  }
+
+  read(TProtocol iprot) {
+    TField field;
+    iprot.readStructBegin();
+    while (true) {
+      field = iprot.readFieldBegin();
+      if (field.type == TType.STOP) {
+        break;
+      }
+      switch (field.id) {
+        case SESSION:
+          if (field.type == TType.STRING) {
+            this.session = iprot.readString();
+          } else {
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case DB_ID:
+          if (field.type == TType.I32) {
+            this.db_id = iprot.readI32();
+            this.__isset_db_id = true;
+          } else {
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case TABLE_ID:
+          if (field.type == TType.I32) {
+            this.table_id = iprot.readI32();
+            this.__isset_table_id = true;
+          } else {
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        default:
+          TProtocolUtil.skip(iprot, field.type);
+          break;
+      }
+      iprot.readFieldEnd();
+    }
+    iprot.readStructEnd();
+
+    // check for required fields of primitive type, which can't be checked in the validate method
+    validate();
+  }
+
+  write(TProtocol oprot) {
+    validate();
+
+    oprot.writeStructBegin(_STRUCT_DESC);
+    if (this.session != null) {
+      oprot.writeFieldBegin(_SESSION_FIELD_DESC);
+      oprot.writeString(this.session);
+      oprot.writeFieldEnd();
+    }
+    oprot.writeFieldBegin(_DB_ID_FIELD_DESC);
+    oprot.writeI32(this.db_id);
+    oprot.writeFieldEnd();
+    oprot.writeFieldBegin(_TABLE_ID_FIELD_DESC);
+    oprot.writeI32(this.table_id);
+    oprot.writeFieldEnd();
+    oprot.writeFieldStop();
+    oprot.writeStructEnd();
+  }
+
+  String toString() {
+    StringBuffer ret = new StringBuffer("get_table_epoch_args(");
+
+    ret.write("session:");
+    if (this.session == null) {
+      ret.write("null");
+    } else {
+      ret.write(this.session);
+    }
+
+    ret.write(", ");
+    ret.write("db_id:");
+    ret.write(this.db_id);
+
+    ret.write(", ");
+    ret.write("table_id:");
+    ret.write(this.table_id);
+
+    ret.write(")");
+
+    return ret.toString();
+  }
+
+  validate() {
+    // check for required fields
+    // check that fields of type enum have valid values
+  }
+
+}
+
+class get_table_epoch_result implements TBase {
+  static final TStruct _STRUCT_DESC = new TStruct("get_table_epoch_result");
+  static final TField _SUCCESS_FIELD_DESC = new TField("success", TType.I32, 0);
+
+  int _success = 0;
+  static const int SUCCESS = 0;
+
+  bool __isset_success = false;
+
+  get_table_epoch_result() {
+  }
+
+  // success
+  int get success => this._success;
+
+  set success(int success) {
+    this._success = success;
+    this.__isset_success = true;
+  }
+
+  bool isSetSuccess() => this.__isset_success;
+
+  unsetSuccess() {
+    this.__isset_success = false;
+  }
+
+  getFieldValue(int fieldID) {
+    switch (fieldID) {
+      case SUCCESS:
+        return this.success;
+      default:
+        throw new ArgumentError("Field $fieldID doesn't exist!");
+    }
+  }
+
+  setFieldValue(int fieldID, Object value) {
+    switch (fieldID) {
+      case SUCCESS:
+        if (value == null) {
+          unsetSuccess();
+        } else {
+          this.success = value;
+        }
+        break;
+
+      default:
+        throw new ArgumentError("Field $fieldID doesn't exist!");
+    }
+  }
+
+  // Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise
+  bool isSet(int fieldID) {
+    switch (fieldID) {
+      case SUCCESS:
+        return isSetSuccess();
+      default:
+        throw new ArgumentError("Field $fieldID doesn't exist!");
+    }
+  }
+
+  read(TProtocol iprot) {
+    TField field;
+    iprot.readStructBegin();
+    while (true) {
+      field = iprot.readFieldBegin();
+      if (field.type == TType.STOP) {
+        break;
+      }
+      switch (field.id) {
+        case SUCCESS:
+          if (field.type == TType.I32) {
+            this.success = iprot.readI32();
+            this.__isset_success = true;
+          } else {
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        default:
+          TProtocolUtil.skip(iprot, field.type);
+          break;
+      }
+      iprot.readFieldEnd();
+    }
+    iprot.readStructEnd();
+
+    // check for required fields of primitive type, which can't be checked in the validate method
+    validate();
+  }
+
+  write(TProtocol oprot) {
+    oprot.writeStructBegin(_STRUCT_DESC);
+
+    if (this.isSetSuccess()) {
+      oprot.writeFieldBegin(_SUCCESS_FIELD_DESC);
+      oprot.writeI32(this.success);
+      oprot.writeFieldEnd();
+    }
+    oprot.writeFieldStop();
+    oprot.writeStructEnd();
+  }
+
+  String toString() {
+    StringBuffer ret = new StringBuffer("get_table_epoch_result(");
+
+    ret.write("success:");
+    ret.write(this.success);
+
+    ret.write(")");
+
+    return ret.toString();
+  }
+
+  validate() {
+    // check for required fields
+    // check that fields of type enum have valid values
+  }
+
+}
+
 class sql_execute_args implements TBase {
   static final TStruct _STRUCT_DESC = new TStruct("sql_execute_args");
   static final TField _SESSION_FIELD_DESC = new TField("session", TType.STRING, 1);
@@ -8081,6 +8298,7 @@ class sql_execute_args implements TBase {
   static final TField _COLUMN_FORMAT_FIELD_DESC = new TField("column_format", TType.BOOL, 3);
   static final TField _NONCE_FIELD_DESC = new TField("nonce", TType.STRING, 4);
   static final TField _FIRST_N_FIELD_DESC = new TField("first_n", TType.I32, 5);
+  static final TField _AT_MOST_N_FIELD_DESC = new TField("at_most_n", TType.I32, 6);
 
   String _session;
   static const int SESSION = 1;
@@ -8092,12 +8310,17 @@ class sql_execute_args implements TBase {
   static const int NONCE = 4;
   int _first_n = 0;
   static const int FIRST_N = 5;
+  int _at_most_n = 0;
+  static const int AT_MOST_N = 6;
 
   bool __isset_column_format = false;
   bool __isset_first_n = false;
+  bool __isset_at_most_n = false;
 
   sql_execute_args() {
     this.first_n = -1;
+
+    this.at_most_n = -1;
 
   }
 
@@ -8168,6 +8391,20 @@ class sql_execute_args implements TBase {
     this.__isset_first_n = false;
   }
 
+  // at_most_n
+  int get at_most_n => this._at_most_n;
+
+  set at_most_n(int at_most_n) {
+    this._at_most_n = at_most_n;
+    this.__isset_at_most_n = true;
+  }
+
+  bool isSetAt_most_n() => this.__isset_at_most_n;
+
+  unsetAt_most_n() {
+    this.__isset_at_most_n = false;
+  }
+
   getFieldValue(int fieldID) {
     switch (fieldID) {
       case SESSION:
@@ -8180,6 +8417,8 @@ class sql_execute_args implements TBase {
         return this.nonce;
       case FIRST_N:
         return this.first_n;
+      case AT_MOST_N:
+        return this.at_most_n;
       default:
         throw new ArgumentError("Field $fieldID doesn't exist!");
     }
@@ -8227,6 +8466,14 @@ class sql_execute_args implements TBase {
         }
         break;
 
+      case AT_MOST_N:
+        if (value == null) {
+          unsetAt_most_n();
+        } else {
+          this.at_most_n = value;
+        }
+        break;
+
       default:
         throw new ArgumentError("Field $fieldID doesn't exist!");
     }
@@ -8245,6 +8492,8 @@ class sql_execute_args implements TBase {
         return isSetNonce();
       case FIRST_N:
         return isSetFirst_n();
+      case AT_MOST_N:
+        return isSetAt_most_n();
       default:
         throw new ArgumentError("Field $fieldID doesn't exist!");
     }
@@ -8296,6 +8545,14 @@ class sql_execute_args implements TBase {
             TProtocolUtil.skip(iprot, field.type);
           }
           break;
+        case AT_MOST_N:
+          if (field.type == TType.I32) {
+            this.at_most_n = iprot.readI32();
+            this.__isset_at_most_n = true;
+          } else {
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
         default:
           TProtocolUtil.skip(iprot, field.type);
           break;
@@ -8332,6 +8589,9 @@ class sql_execute_args implements TBase {
     }
     oprot.writeFieldBegin(_FIRST_N_FIELD_DESC);
     oprot.writeI32(this.first_n);
+    oprot.writeFieldEnd();
+    oprot.writeFieldBegin(_AT_MOST_N_FIELD_DESC);
+    oprot.writeI32(this.at_most_n);
     oprot.writeFieldEnd();
     oprot.writeFieldStop();
     oprot.writeStructEnd();
@@ -8370,6 +8630,10 @@ class sql_execute_args implements TBase {
     ret.write(", ");
     ret.write("first_n:");
     ret.write(this.first_n);
+
+    ret.write(", ");
+    ret.write("at_most_n:");
+    ret.write(this.at_most_n);
 
     ret.write(")");
 
@@ -9981,15 +10245,15 @@ class sql_validate_result implements TBase {
         case SUCCESS:
           if (field.type == TType.MAP) {
             {
-              TMap _map102 = iprot.readMapBegin();
+              TMap _map114 = iprot.readMapBegin();
               this.success = new Map<String, TColumnType>();
-              for (int _i103 = 0; _i103 < _map102.length; ++_i103) {
-                String _key104;
-                TColumnType _val105;
-                _key104 = iprot.readString();
-                _val105 = new TColumnType();
-                _val105.read(iprot);
-                this.success[_key104] = _val105;
+              for (int _i115 = 0; _i115 < _map114.length; ++_i115) {
+                String _key116;
+                TColumnType _val117;
+                _key116 = iprot.readString();
+                _val117 = new TColumnType();
+                _val117.read(iprot);
+                this.success[_key116] = _val117;
               }
               iprot.readMapEnd();
             }
@@ -10024,9 +10288,9 @@ class sql_validate_result implements TBase {
       oprot.writeFieldBegin(_SUCCESS_FIELD_DESC);
       {
         oprot.writeMapBegin(new TMap(TType.STRING, TType.STRUCT, this.success.length));
-        for (var elem107 in this.success.keys) {
-          oprot.writeString(elem107);
-          this.success[elem107].write(oprot);
+        for (var elem119 in this.success.keys) {
+          oprot.writeString(elem119);
+          this.success[elem119].write(oprot);
         }
         oprot.writeMapEnd();
       }
@@ -11111,23 +11375,23 @@ class get_result_row_for_pixel_args implements TBase {
         case TABLE_COL_NAMES:
           if (field.type == TType.MAP) {
             {
-              TMap _map108 = iprot.readMapBegin();
+              TMap _map120 = iprot.readMapBegin();
               this.table_col_names = new Map<String, List<String>>();
-              for (int _i109 = 0; _i109 < _map108.length; ++_i109) {
-                String _key110;
-                List<String> _val111;
-                _key110 = iprot.readString();
+              for (int _i121 = 0; _i121 < _map120.length; ++_i121) {
+                String _key122;
+                List<String> _val123;
+                _key122 = iprot.readString();
                 {
-                  TList _list112 = iprot.readListBegin();
-                  _val111 = new List<String>();
-                  for (int _i113 = 0; _i113 < _list112.length; ++_i113) {
-                    String _elem114;
-                    _elem114 = iprot.readString();
-                    _val111.add(_elem114);
+                  TList _list124 = iprot.readListBegin();
+                  _val123 = new List<String>();
+                  for (int _i125 = 0; _i125 < _list124.length; ++_i125) {
+                    String _elem126;
+                    _elem126 = iprot.readString();
+                    _val123.add(_elem126);
                   }
                   iprot.readListEnd();
                 }
-                this.table_col_names[_key110] = _val111;
+                this.table_col_names[_key122] = _val123;
               }
               iprot.readMapEnd();
             }
@@ -11191,12 +11455,12 @@ class get_result_row_for_pixel_args implements TBase {
       oprot.writeFieldBegin(_TABLE_COL_NAMES_FIELD_DESC);
       {
         oprot.writeMapBegin(new TMap(TType.STRING, TType.LIST, this.table_col_names.length));
-        for (var elem116 in this.table_col_names.keys) {
-          oprot.writeString(elem116);
+        for (var elem128 in this.table_col_names.keys) {
+          oprot.writeString(elem128);
           {
-            oprot.writeListBegin(new TList(TType.STRING, this.table_col_names[elem116].length));
-            for (var elem117 in this.table_col_names[elem116]) {
-              oprot.writeString(elem117);
+            oprot.writeListBegin(new TList(TType.STRING, this.table_col_names[elem128].length));
+            for (var elem129 in this.table_col_names[elem128]) {
+              oprot.writeString(elem129);
             }
             oprot.writeListEnd();
           }
@@ -12004,13 +12268,13 @@ class get_frontend_views_result implements TBase {
         case SUCCESS:
           if (field.type == TType.LIST) {
             {
-              TList _list118 = iprot.readListBegin();
+              TList _list130 = iprot.readListBegin();
               this.success = new List<TFrontendView>();
-              for (int _i119 = 0; _i119 < _list118.length; ++_i119) {
-                TFrontendView _elem120;
-                _elem120 = new TFrontendView();
-                _elem120.read(iprot);
-                this.success.add(_elem120);
+              for (int _i131 = 0; _i131 < _list130.length; ++_i131) {
+                TFrontendView _elem132;
+                _elem132 = new TFrontendView();
+                _elem132.read(iprot);
+                this.success.add(_elem132);
               }
               iprot.readListEnd();
             }
@@ -12045,8 +12309,8 @@ class get_frontend_views_result implements TBase {
       oprot.writeFieldBegin(_SUCCESS_FIELD_DESC);
       {
         oprot.writeListBegin(new TList(TType.STRUCT, this.success.length));
-        for (var elem121 in this.success) {
-          elem121.write(oprot);
+        for (var elem133 in this.success) {
+          elem133.write(oprot);
         }
         oprot.writeListEnd();
       }
@@ -13677,13 +13941,13 @@ class load_table_binary_args implements TBase {
         case ROWS:
           if (field.type == TType.LIST) {
             {
-              TList _list122 = iprot.readListBegin();
+              TList _list134 = iprot.readListBegin();
               this.rows = new List<TRow>();
-              for (int _i123 = 0; _i123 < _list122.length; ++_i123) {
-                TRow _elem124;
-                _elem124 = new TRow();
-                _elem124.read(iprot);
-                this.rows.add(_elem124);
+              for (int _i135 = 0; _i135 < _list134.length; ++_i135) {
+                TRow _elem136;
+                _elem136 = new TRow();
+                _elem136.read(iprot);
+                this.rows.add(_elem136);
               }
               iprot.readListEnd();
             }
@@ -13721,8 +13985,8 @@ class load_table_binary_args implements TBase {
       oprot.writeFieldBegin(_ROWS_FIELD_DESC);
       {
         oprot.writeListBegin(new TList(TType.STRUCT, this.rows.length));
-        for (var elem125 in this.rows) {
-          elem125.write(oprot);
+        for (var elem137 in this.rows) {
+          elem137.write(oprot);
         }
         oprot.writeListEnd();
       }
@@ -13891,6 +14155,698 @@ class load_table_binary_result implements TBase {
 
 }
 
+class load_table_binary_columnar_args implements TBase {
+  static final TStruct _STRUCT_DESC = new TStruct("load_table_binary_columnar_args");
+  static final TField _SESSION_FIELD_DESC = new TField("session", TType.STRING, 1);
+  static final TField _TABLE_NAME_FIELD_DESC = new TField("table_name", TType.STRING, 2);
+  static final TField _COLS_FIELD_DESC = new TField("cols", TType.LIST, 3);
+
+  String _session;
+  static const int SESSION = 1;
+  String _table_name;
+  static const int TABLE_NAME = 2;
+  List<TColumn> _cols;
+  static const int COLS = 3;
+
+
+  load_table_binary_columnar_args() {
+  }
+
+  // session
+  String get session => this._session;
+
+  set session(String session) {
+    this._session = session;
+  }
+
+  bool isSetSession() => this.session != null;
+
+  unsetSession() {
+    this.session = null;
+  }
+
+  // table_name
+  String get table_name => this._table_name;
+
+  set table_name(String table_name) {
+    this._table_name = table_name;
+  }
+
+  bool isSetTable_name() => this.table_name != null;
+
+  unsetTable_name() {
+    this.table_name = null;
+  }
+
+  // cols
+  List<TColumn> get cols => this._cols;
+
+  set cols(List<TColumn> cols) {
+    this._cols = cols;
+  }
+
+  bool isSetCols() => this.cols != null;
+
+  unsetCols() {
+    this.cols = null;
+  }
+
+  getFieldValue(int fieldID) {
+    switch (fieldID) {
+      case SESSION:
+        return this.session;
+      case TABLE_NAME:
+        return this.table_name;
+      case COLS:
+        return this.cols;
+      default:
+        throw new ArgumentError("Field $fieldID doesn't exist!");
+    }
+  }
+
+  setFieldValue(int fieldID, Object value) {
+    switch (fieldID) {
+      case SESSION:
+        if (value == null) {
+          unsetSession();
+        } else {
+          this.session = value;
+        }
+        break;
+
+      case TABLE_NAME:
+        if (value == null) {
+          unsetTable_name();
+        } else {
+          this.table_name = value;
+        }
+        break;
+
+      case COLS:
+        if (value == null) {
+          unsetCols();
+        } else {
+          this.cols = value;
+        }
+        break;
+
+      default:
+        throw new ArgumentError("Field $fieldID doesn't exist!");
+    }
+  }
+
+  // Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise
+  bool isSet(int fieldID) {
+    switch (fieldID) {
+      case SESSION:
+        return isSetSession();
+      case TABLE_NAME:
+        return isSetTable_name();
+      case COLS:
+        return isSetCols();
+      default:
+        throw new ArgumentError("Field $fieldID doesn't exist!");
+    }
+  }
+
+  read(TProtocol iprot) {
+    TField field;
+    iprot.readStructBegin();
+    while (true) {
+      field = iprot.readFieldBegin();
+      if (field.type == TType.STOP) {
+        break;
+      }
+      switch (field.id) {
+        case SESSION:
+          if (field.type == TType.STRING) {
+            this.session = iprot.readString();
+          } else {
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case TABLE_NAME:
+          if (field.type == TType.STRING) {
+            this.table_name = iprot.readString();
+          } else {
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case COLS:
+          if (field.type == TType.LIST) {
+            {
+              TList _list138 = iprot.readListBegin();
+              this.cols = new List<TColumn>();
+              for (int _i139 = 0; _i139 < _list138.length; ++_i139) {
+                TColumn _elem140;
+                _elem140 = new TColumn();
+                _elem140.read(iprot);
+                this.cols.add(_elem140);
+              }
+              iprot.readListEnd();
+            }
+          } else {
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        default:
+          TProtocolUtil.skip(iprot, field.type);
+          break;
+      }
+      iprot.readFieldEnd();
+    }
+    iprot.readStructEnd();
+
+    // check for required fields of primitive type, which can't be checked in the validate method
+    validate();
+  }
+
+  write(TProtocol oprot) {
+    validate();
+
+    oprot.writeStructBegin(_STRUCT_DESC);
+    if (this.session != null) {
+      oprot.writeFieldBegin(_SESSION_FIELD_DESC);
+      oprot.writeString(this.session);
+      oprot.writeFieldEnd();
+    }
+    if (this.table_name != null) {
+      oprot.writeFieldBegin(_TABLE_NAME_FIELD_DESC);
+      oprot.writeString(this.table_name);
+      oprot.writeFieldEnd();
+    }
+    if (this.cols != null) {
+      oprot.writeFieldBegin(_COLS_FIELD_DESC);
+      {
+        oprot.writeListBegin(new TList(TType.STRUCT, this.cols.length));
+        for (var elem141 in this.cols) {
+          elem141.write(oprot);
+        }
+        oprot.writeListEnd();
+      }
+      oprot.writeFieldEnd();
+    }
+    oprot.writeFieldStop();
+    oprot.writeStructEnd();
+  }
+
+  String toString() {
+    StringBuffer ret = new StringBuffer("load_table_binary_columnar_args(");
+
+    ret.write("session:");
+    if (this.session == null) {
+      ret.write("null");
+    } else {
+      ret.write(this.session);
+    }
+
+    ret.write(", ");
+    ret.write("table_name:");
+    if (this.table_name == null) {
+      ret.write("null");
+    } else {
+      ret.write(this.table_name);
+    }
+
+    ret.write(", ");
+    ret.write("cols:");
+    if (this.cols == null) {
+      ret.write("null");
+    } else {
+      ret.write(this.cols);
+    }
+
+    ret.write(")");
+
+    return ret.toString();
+  }
+
+  validate() {
+    // check for required fields
+    // check that fields of type enum have valid values
+  }
+
+}
+
+class load_table_binary_columnar_result implements TBase {
+  static final TStruct _STRUCT_DESC = new TStruct("load_table_binary_columnar_result");
+  static final TField _E_FIELD_DESC = new TField("e", TType.STRUCT, 1);
+
+  TMapDException _e;
+  static const int E = 1;
+
+
+  load_table_binary_columnar_result() {
+  }
+
+  // e
+  TMapDException get e => this._e;
+
+  set e(TMapDException e) {
+    this._e = e;
+  }
+
+  bool isSetE() => this.e != null;
+
+  unsetE() {
+    this.e = null;
+  }
+
+  getFieldValue(int fieldID) {
+    switch (fieldID) {
+      case E:
+        return this.e;
+      default:
+        throw new ArgumentError("Field $fieldID doesn't exist!");
+    }
+  }
+
+  setFieldValue(int fieldID, Object value) {
+    switch (fieldID) {
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          this.e = value;
+        }
+        break;
+
+      default:
+        throw new ArgumentError("Field $fieldID doesn't exist!");
+    }
+  }
+
+  // Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise
+  bool isSet(int fieldID) {
+    switch (fieldID) {
+      case E:
+        return isSetE();
+      default:
+        throw new ArgumentError("Field $fieldID doesn't exist!");
+    }
+  }
+
+  read(TProtocol iprot) {
+    TField field;
+    iprot.readStructBegin();
+    while (true) {
+      field = iprot.readFieldBegin();
+      if (field.type == TType.STOP) {
+        break;
+      }
+      switch (field.id) {
+        case E:
+          if (field.type == TType.STRUCT) {
+            this.e = new TMapDException();
+            this.e.read(iprot);
+          } else {
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        default:
+          TProtocolUtil.skip(iprot, field.type);
+          break;
+      }
+      iprot.readFieldEnd();
+    }
+    iprot.readStructEnd();
+
+    // check for required fields of primitive type, which can't be checked in the validate method
+    validate();
+  }
+
+  write(TProtocol oprot) {
+    oprot.writeStructBegin(_STRUCT_DESC);
+
+    if (this.isSetE()) {
+      oprot.writeFieldBegin(_E_FIELD_DESC);
+      this.e.write(oprot);
+      oprot.writeFieldEnd();
+    }
+    oprot.writeFieldStop();
+    oprot.writeStructEnd();
+  }
+
+  String toString() {
+    StringBuffer ret = new StringBuffer("load_table_binary_columnar_result(");
+
+    ret.write("e:");
+    if (this.e == null) {
+      ret.write("null");
+    } else {
+      ret.write(this.e);
+    }
+
+    ret.write(")");
+
+    return ret.toString();
+  }
+
+  validate() {
+    // check for required fields
+    // check that fields of type enum have valid values
+  }
+
+}
+
+class load_table_binary_arrow_args implements TBase {
+  static final TStruct _STRUCT_DESC = new TStruct("load_table_binary_arrow_args");
+  static final TField _SESSION_FIELD_DESC = new TField("session", TType.STRING, 1);
+  static final TField _TABLE_NAME_FIELD_DESC = new TField("table_name", TType.STRING, 2);
+  static final TField _ARROW_STREAM_FIELD_DESC = new TField("arrow_stream", TType.STRING, 3);
+
+  String _session;
+  static const int SESSION = 1;
+  String _table_name;
+  static const int TABLE_NAME = 2;
+  Uint8List _arrow_stream;
+  static const int ARROW_STREAM = 3;
+
+
+  load_table_binary_arrow_args() {
+  }
+
+  // session
+  String get session => this._session;
+
+  set session(String session) {
+    this._session = session;
+  }
+
+  bool isSetSession() => this.session != null;
+
+  unsetSession() {
+    this.session = null;
+  }
+
+  // table_name
+  String get table_name => this._table_name;
+
+  set table_name(String table_name) {
+    this._table_name = table_name;
+  }
+
+  bool isSetTable_name() => this.table_name != null;
+
+  unsetTable_name() {
+    this.table_name = null;
+  }
+
+  // arrow_stream
+  Uint8List get arrow_stream => this._arrow_stream;
+
+  set arrow_stream(Uint8List arrow_stream) {
+    this._arrow_stream = arrow_stream;
+  }
+
+  bool isSetArrow_stream() => this.arrow_stream != null;
+
+  unsetArrow_stream() {
+    this.arrow_stream = null;
+  }
+
+  getFieldValue(int fieldID) {
+    switch (fieldID) {
+      case SESSION:
+        return this.session;
+      case TABLE_NAME:
+        return this.table_name;
+      case ARROW_STREAM:
+        return this.arrow_stream;
+      default:
+        throw new ArgumentError("Field $fieldID doesn't exist!");
+    }
+  }
+
+  setFieldValue(int fieldID, Object value) {
+    switch (fieldID) {
+      case SESSION:
+        if (value == null) {
+          unsetSession();
+        } else {
+          this.session = value;
+        }
+        break;
+
+      case TABLE_NAME:
+        if (value == null) {
+          unsetTable_name();
+        } else {
+          this.table_name = value;
+        }
+        break;
+
+      case ARROW_STREAM:
+        if (value == null) {
+          unsetArrow_stream();
+        } else {
+          this.arrow_stream = value;
+        }
+        break;
+
+      default:
+        throw new ArgumentError("Field $fieldID doesn't exist!");
+    }
+  }
+
+  // Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise
+  bool isSet(int fieldID) {
+    switch (fieldID) {
+      case SESSION:
+        return isSetSession();
+      case TABLE_NAME:
+        return isSetTable_name();
+      case ARROW_STREAM:
+        return isSetArrow_stream();
+      default:
+        throw new ArgumentError("Field $fieldID doesn't exist!");
+    }
+  }
+
+  read(TProtocol iprot) {
+    TField field;
+    iprot.readStructBegin();
+    while (true) {
+      field = iprot.readFieldBegin();
+      if (field.type == TType.STOP) {
+        break;
+      }
+      switch (field.id) {
+        case SESSION:
+          if (field.type == TType.STRING) {
+            this.session = iprot.readString();
+          } else {
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case TABLE_NAME:
+          if (field.type == TType.STRING) {
+            this.table_name = iprot.readString();
+          } else {
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case ARROW_STREAM:
+          if (field.type == TType.STRING) {
+            this.arrow_stream = iprot.readBinary();
+          } else {
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        default:
+          TProtocolUtil.skip(iprot, field.type);
+          break;
+      }
+      iprot.readFieldEnd();
+    }
+    iprot.readStructEnd();
+
+    // check for required fields of primitive type, which can't be checked in the validate method
+    validate();
+  }
+
+  write(TProtocol oprot) {
+    validate();
+
+    oprot.writeStructBegin(_STRUCT_DESC);
+    if (this.session != null) {
+      oprot.writeFieldBegin(_SESSION_FIELD_DESC);
+      oprot.writeString(this.session);
+      oprot.writeFieldEnd();
+    }
+    if (this.table_name != null) {
+      oprot.writeFieldBegin(_TABLE_NAME_FIELD_DESC);
+      oprot.writeString(this.table_name);
+      oprot.writeFieldEnd();
+    }
+    if (this.arrow_stream != null) {
+      oprot.writeFieldBegin(_ARROW_STREAM_FIELD_DESC);
+      oprot.writeBinary(this.arrow_stream);
+      oprot.writeFieldEnd();
+    }
+    oprot.writeFieldStop();
+    oprot.writeStructEnd();
+  }
+
+  String toString() {
+    StringBuffer ret = new StringBuffer("load_table_binary_arrow_args(");
+
+    ret.write("session:");
+    if (this.session == null) {
+      ret.write("null");
+    } else {
+      ret.write(this.session);
+    }
+
+    ret.write(", ");
+    ret.write("table_name:");
+    if (this.table_name == null) {
+      ret.write("null");
+    } else {
+      ret.write(this.table_name);
+    }
+
+    ret.write(", ");
+    ret.write("arrow_stream:");
+    if (this.arrow_stream == null) {
+      ret.write("null");
+    } else {
+      ret.write("BINARY");
+    }
+
+    ret.write(")");
+
+    return ret.toString();
+  }
+
+  validate() {
+    // check for required fields
+    // check that fields of type enum have valid values
+  }
+
+}
+
+class load_table_binary_arrow_result implements TBase {
+  static final TStruct _STRUCT_DESC = new TStruct("load_table_binary_arrow_result");
+  static final TField _E_FIELD_DESC = new TField("e", TType.STRUCT, 1);
+
+  TMapDException _e;
+  static const int E = 1;
+
+
+  load_table_binary_arrow_result() {
+  }
+
+  // e
+  TMapDException get e => this._e;
+
+  set e(TMapDException e) {
+    this._e = e;
+  }
+
+  bool isSetE() => this.e != null;
+
+  unsetE() {
+    this.e = null;
+  }
+
+  getFieldValue(int fieldID) {
+    switch (fieldID) {
+      case E:
+        return this.e;
+      default:
+        throw new ArgumentError("Field $fieldID doesn't exist!");
+    }
+  }
+
+  setFieldValue(int fieldID, Object value) {
+    switch (fieldID) {
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          this.e = value;
+        }
+        break;
+
+      default:
+        throw new ArgumentError("Field $fieldID doesn't exist!");
+    }
+  }
+
+  // Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise
+  bool isSet(int fieldID) {
+    switch (fieldID) {
+      case E:
+        return isSetE();
+      default:
+        throw new ArgumentError("Field $fieldID doesn't exist!");
+    }
+  }
+
+  read(TProtocol iprot) {
+    TField field;
+    iprot.readStructBegin();
+    while (true) {
+      field = iprot.readFieldBegin();
+      if (field.type == TType.STOP) {
+        break;
+      }
+      switch (field.id) {
+        case E:
+          if (field.type == TType.STRUCT) {
+            this.e = new TMapDException();
+            this.e.read(iprot);
+          } else {
+            TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        default:
+          TProtocolUtil.skip(iprot, field.type);
+          break;
+      }
+      iprot.readFieldEnd();
+    }
+    iprot.readStructEnd();
+
+    // check for required fields of primitive type, which can't be checked in the validate method
+    validate();
+  }
+
+  write(TProtocol oprot) {
+    oprot.writeStructBegin(_STRUCT_DESC);
+
+    if (this.isSetE()) {
+      oprot.writeFieldBegin(_E_FIELD_DESC);
+      this.e.write(oprot);
+      oprot.writeFieldEnd();
+    }
+    oprot.writeFieldStop();
+    oprot.writeStructEnd();
+  }
+
+  String toString() {
+    StringBuffer ret = new StringBuffer("load_table_binary_arrow_result(");
+
+    ret.write("e:");
+    if (this.e == null) {
+      ret.write("null");
+    } else {
+      ret.write(this.e);
+    }
+
+    ret.write(")");
+
+    return ret.toString();
+  }
+
+  validate() {
+    // check for required fields
+    // check that fields of type enum have valid values
+  }
+
+}
+
 class load_table_args implements TBase {
   static final TStruct _STRUCT_DESC = new TStruct("load_table_args");
   static final TField _SESSION_FIELD_DESC = new TField("session", TType.STRING, 1);
@@ -14031,13 +14987,13 @@ class load_table_args implements TBase {
         case ROWS:
           if (field.type == TType.LIST) {
             {
-              TList _list126 = iprot.readListBegin();
+              TList _list142 = iprot.readListBegin();
               this.rows = new List<TStringRow>();
-              for (int _i127 = 0; _i127 < _list126.length; ++_i127) {
-                TStringRow _elem128;
-                _elem128 = new TStringRow();
-                _elem128.read(iprot);
-                this.rows.add(_elem128);
+              for (int _i143 = 0; _i143 < _list142.length; ++_i143) {
+                TStringRow _elem144;
+                _elem144 = new TStringRow();
+                _elem144.read(iprot);
+                this.rows.add(_elem144);
               }
               iprot.readListEnd();
             }
@@ -14075,8 +15031,8 @@ class load_table_args implements TBase {
       oprot.writeFieldBegin(_ROWS_FIELD_DESC);
       {
         oprot.writeListBegin(new TList(TType.STRUCT, this.rows.length));
-        for (var elem129 in this.rows) {
-          elem129.write(oprot);
+        for (var elem145 in this.rows) {
+          elem145.write(oprot);
         }
         oprot.writeListEnd();
       }
@@ -14804,13 +15760,13 @@ class create_table_args implements TBase {
         case ROW_DESC:
           if (field.type == TType.LIST) {
             {
-              TList _list130 = iprot.readListBegin();
+              TList _list146 = iprot.readListBegin();
               this.row_desc = new List<TColumnType>();
-              for (int _i131 = 0; _i131 < _list130.length; ++_i131) {
-                TColumnType _elem132;
-                _elem132 = new TColumnType();
-                _elem132.read(iprot);
-                this.row_desc.add(_elem132);
+              for (int _i147 = 0; _i147 < _list146.length; ++_i147) {
+                TColumnType _elem148;
+                _elem148 = new TColumnType();
+                _elem148.read(iprot);
+                this.row_desc.add(_elem148);
               }
               iprot.readListEnd();
             }
@@ -14856,8 +15812,8 @@ class create_table_args implements TBase {
       oprot.writeFieldBegin(_ROW_DESC_FIELD_DESC);
       {
         oprot.writeListBegin(new TList(TType.STRUCT, this.row_desc.length));
-        for (var elem133 in this.row_desc) {
-          elem133.write(oprot);
+        for (var elem149 in this.row_desc) {
+          elem149.write(oprot);
         }
         oprot.writeListEnd();
       }
@@ -15642,13 +16598,13 @@ class import_geo_table_args implements TBase {
         case ROW_DESC:
           if (field.type == TType.LIST) {
             {
-              TList _list134 = iprot.readListBegin();
+              TList _list150 = iprot.readListBegin();
               this.row_desc = new List<TColumnType>();
-              for (int _i135 = 0; _i135 < _list134.length; ++_i135) {
-                TColumnType _elem136;
-                _elem136 = new TColumnType();
-                _elem136.read(iprot);
-                this.row_desc.add(_elem136);
+              for (int _i151 = 0; _i151 < _list150.length; ++_i151) {
+                TColumnType _elem152;
+                _elem152 = new TColumnType();
+                _elem152.read(iprot);
+                this.row_desc.add(_elem152);
               }
               iprot.readListEnd();
             }
@@ -15696,8 +16652,8 @@ class import_geo_table_args implements TBase {
       oprot.writeFieldBegin(_ROW_DESC_FIELD_DESC);
       {
         oprot.writeListBegin(new TList(TType.STRUCT, this.row_desc.length));
-        for (var elem137 in this.row_desc) {
-          elem137.write(oprot);
+        for (var elem153 in this.row_desc) {
+          elem153.write(oprot);
         }
         oprot.writeListEnd();
       }
@@ -17029,13 +17985,13 @@ class broadcast_serialized_rows_args implements TBase {
         case ROW_DESC:
           if (field.type == TType.LIST) {
             {
-              TList _list138 = iprot.readListBegin();
+              TList _list154 = iprot.readListBegin();
               this.row_desc = new List<TColumnType>();
-              for (int _i139 = 0; _i139 < _list138.length; ++_i139) {
-                TColumnType _elem140;
-                _elem140 = new TColumnType();
-                _elem140.read(iprot);
-                this.row_desc.add(_elem140);
+              for (int _i155 = 0; _i155 < _list154.length; ++_i155) {
+                TColumnType _elem156;
+                _elem156 = new TColumnType();
+                _elem156.read(iprot);
+                this.row_desc.add(_elem156);
               }
               iprot.readListEnd();
             }
@@ -17076,8 +18032,8 @@ class broadcast_serialized_rows_args implements TBase {
       oprot.writeFieldBegin(_ROW_DESC_FIELD_DESC);
       {
         oprot.writeListBegin(new TList(TType.STRUCT, this.row_desc.length));
-        for (var elem141 in this.row_desc) {
-          elem141.write(oprot);
+        for (var elem157 in this.row_desc) {
+          elem157.write(oprot);
         }
         oprot.writeListEnd();
       }
@@ -18231,15 +19187,15 @@ class get_table_descriptor_result implements TBase {
         case SUCCESS:
           if (field.type == TType.MAP) {
             {
-              TMap _map142 = iprot.readMapBegin();
+              TMap _map158 = iprot.readMapBegin();
               this.success = new Map<String, TColumnType>();
-              for (int _i143 = 0; _i143 < _map142.length; ++_i143) {
-                String _key144;
-                TColumnType _val145;
-                _key144 = iprot.readString();
-                _val145 = new TColumnType();
-                _val145.read(iprot);
-                this.success[_key144] = _val145;
+              for (int _i159 = 0; _i159 < _map158.length; ++_i159) {
+                String _key160;
+                TColumnType _val161;
+                _key160 = iprot.readString();
+                _val161 = new TColumnType();
+                _val161.read(iprot);
+                this.success[_key160] = _val161;
               }
               iprot.readMapEnd();
             }
@@ -18274,9 +19230,9 @@ class get_table_descriptor_result implements TBase {
       oprot.writeFieldBegin(_SUCCESS_FIELD_DESC);
       {
         oprot.writeMapBegin(new TMap(TType.STRING, TType.STRUCT, this.success.length));
-        for (var elem147 in this.success.keys) {
-          oprot.writeString(elem147);
-          this.success[elem147].write(oprot);
+        for (var elem163 in this.success.keys) {
+          oprot.writeString(elem163);
+          this.success[elem163].write(oprot);
         }
         oprot.writeMapEnd();
       }
@@ -18587,13 +19543,13 @@ class get_row_descriptor_result implements TBase {
         case SUCCESS:
           if (field.type == TType.LIST) {
             {
-              TList _list148 = iprot.readListBegin();
+              TList _list164 = iprot.readListBegin();
               this.success = new List<TColumnType>();
-              for (int _i149 = 0; _i149 < _list148.length; ++_i149) {
-                TColumnType _elem150;
-                _elem150 = new TColumnType();
-                _elem150.read(iprot);
-                this.success.add(_elem150);
+              for (int _i165 = 0; _i165 < _list164.length; ++_i165) {
+                TColumnType _elem166;
+                _elem166 = new TColumnType();
+                _elem166.read(iprot);
+                this.success.add(_elem166);
               }
               iprot.readListEnd();
             }
@@ -18628,8 +19584,8 @@ class get_row_descriptor_result implements TBase {
       oprot.writeFieldBegin(_SUCCESS_FIELD_DESC);
       {
         oprot.writeListBegin(new TList(TType.STRUCT, this.success.length));
-        for (var elem151 in this.success) {
-          elem151.write(oprot);
+        for (var elem167 in this.success) {
+          elem167.write(oprot);
         }
         oprot.writeListEnd();
       }
@@ -19364,13 +20320,13 @@ class get_rows_for_pixels_args implements TBase {
         case PIXELS:
           if (field.type == TType.LIST) {
             {
-              TList _list152 = iprot.readListBegin();
+              TList _list168 = iprot.readListBegin();
               this.pixels = new List<TPixel>();
-              for (int _i153 = 0; _i153 < _list152.length; ++_i153) {
-                TPixel _elem154;
-                _elem154 = new TPixel();
-                _elem154.read(iprot);
-                this.pixels.add(_elem154);
+              for (int _i169 = 0; _i169 < _list168.length; ++_i169) {
+                TPixel _elem170;
+                _elem170 = new TPixel();
+                _elem170.read(iprot);
+                this.pixels.add(_elem170);
               }
               iprot.readListEnd();
             }
@@ -19388,12 +20344,12 @@ class get_rows_for_pixels_args implements TBase {
         case COL_NAMES:
           if (field.type == TType.LIST) {
             {
-              TList _list155 = iprot.readListBegin();
+              TList _list171 = iprot.readListBegin();
               this.col_names = new List<String>();
-              for (int _i156 = 0; _i156 < _list155.length; ++_i156) {
-                String _elem157;
-                _elem157 = iprot.readString();
-                this.col_names.add(_elem157);
+              for (int _i172 = 0; _i172 < _list171.length; ++_i172) {
+                String _elem173;
+                _elem173 = iprot.readString();
+                this.col_names.add(_elem173);
               }
               iprot.readListEnd();
             }
@@ -19444,8 +20400,8 @@ class get_rows_for_pixels_args implements TBase {
       oprot.writeFieldBegin(_PIXELS_FIELD_DESC);
       {
         oprot.writeListBegin(new TList(TType.STRUCT, this.pixels.length));
-        for (var elem158 in this.pixels) {
-          elem158.write(oprot);
+        for (var elem174 in this.pixels) {
+          elem174.write(oprot);
         }
         oprot.writeListEnd();
       }
@@ -19460,8 +20416,8 @@ class get_rows_for_pixels_args implements TBase {
       oprot.writeFieldBegin(_COL_NAMES_FIELD_DESC);
       {
         oprot.writeListBegin(new TList(TType.STRING, this.col_names.length));
-        for (var elem159 in this.col_names) {
-          oprot.writeString(elem159);
+        for (var elem175 in this.col_names) {
+          oprot.writeString(elem175);
         }
         oprot.writeListEnd();
       }
@@ -20012,12 +20968,12 @@ class get_row_for_pixel_args implements TBase {
         case COL_NAMES:
           if (field.type == TType.LIST) {
             {
-              TList _list160 = iprot.readListBegin();
+              TList _list176 = iprot.readListBegin();
               this.col_names = new List<String>();
-              for (int _i161 = 0; _i161 < _list160.length; ++_i161) {
-                String _elem162;
-                _elem162 = iprot.readString();
-                this.col_names.add(_elem162);
+              for (int _i177 = 0; _i177 < _list176.length; ++_i177) {
+                String _elem178;
+                _elem178 = iprot.readString();
+                this.col_names.add(_elem178);
               }
               iprot.readListEnd();
             }
@@ -20086,8 +21042,8 @@ class get_row_for_pixel_args implements TBase {
       oprot.writeFieldBegin(_COL_NAMES_FIELD_DESC);
       {
         oprot.writeListBegin(new TList(TType.STRING, this.col_names.length));
-        for (var elem163 in this.col_names) {
-          oprot.writeString(elem163);
+        for (var elem179 in this.col_names) {
+          oprot.writeString(elem179);
         }
         oprot.writeListEnd();
       }

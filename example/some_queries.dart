@@ -1,10 +1,10 @@
+import 'package:mapd/src/sample_script/sample_script.dart';
 import 'package:mapd/console.dart';
-import 'package:mapd/src/connector/example_scipt.dart';
 main() async {
 
 //  TProtocol protocol = new TProtocol(transport)
   var connector = new MapdConnectorConsole()
-    ..url = 'http://18.194.148.181:9090'
+    ..url = 'http://mapd.infovizion.ru:9092'
     ..dbName = 'mapd'
     ..user = 'mapd'
     ..password = 'HyperInteractive';

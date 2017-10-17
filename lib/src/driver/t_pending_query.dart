@@ -8,7 +8,7 @@ library mapd.src.t_pending_query;
 
 import 'dart:typed_data' show Uint8List;
 import 'package:mapd/src/thrift/thrift.dart';
-import '../driver.dart';
+import 'package:mapd/src/driver.dart';
 
 class TPendingQuery implements TBase {
   static final TStruct _STRUCT_DESC = new TStruct("TPendingQuery");
@@ -174,13 +174,13 @@ class TPendingQuery implements TBase {
         case COLUMN_RANGES:
           if (field.type == TType.LIST) {
             {
-              TList _list60 = iprot.readListBegin();
+              TList _list64 = iprot.readListBegin();
               this.column_ranges = new List<TColumnRange>();
-              for (int _i61 = 0; _i61 < _list60.length; ++_i61) {
-                TColumnRange _elem62;
-                _elem62 = new TColumnRange();
-                _elem62.read(iprot);
-                this.column_ranges.add(_elem62);
+              for (int _i65 = 0; _i65 < _list64.length; ++_i65) {
+                TColumnRange _elem66;
+                _elem66 = new TColumnRange();
+                _elem66.read(iprot);
+                this.column_ranges.add(_elem66);
               }
               iprot.readListEnd();
             }
@@ -191,13 +191,13 @@ class TPendingQuery implements TBase {
         case DICTIONARY_GENERATIONS:
           if (field.type == TType.LIST) {
             {
-              TList _list63 = iprot.readListBegin();
+              TList _list67 = iprot.readListBegin();
               this.dictionary_generations = new List<TDictionaryGeneration>();
-              for (int _i64 = 0; _i64 < _list63.length; ++_i64) {
-                TDictionaryGeneration _elem65;
-                _elem65 = new TDictionaryGeneration();
-                _elem65.read(iprot);
-                this.dictionary_generations.add(_elem65);
+              for (int _i68 = 0; _i68 < _list67.length; ++_i68) {
+                TDictionaryGeneration _elem69;
+                _elem69 = new TDictionaryGeneration();
+                _elem69.read(iprot);
+                this.dictionary_generations.add(_elem69);
               }
               iprot.readListEnd();
             }
@@ -208,13 +208,13 @@ class TPendingQuery implements TBase {
         case TABLE_GENERATIONS:
           if (field.type == TType.LIST) {
             {
-              TList _list66 = iprot.readListBegin();
+              TList _list70 = iprot.readListBegin();
               this.table_generations = new List<TTableGeneration>();
-              for (int _i67 = 0; _i67 < _list66.length; ++_i67) {
-                TTableGeneration _elem68;
-                _elem68 = new TTableGeneration();
-                _elem68.read(iprot);
-                this.table_generations.add(_elem68);
+              for (int _i71 = 0; _i71 < _list70.length; ++_i71) {
+                TTableGeneration _elem72;
+                _elem72 = new TTableGeneration();
+                _elem72.read(iprot);
+                this.table_generations.add(_elem72);
               }
               iprot.readListEnd();
             }
@@ -245,8 +245,8 @@ class TPendingQuery implements TBase {
       oprot.writeFieldBegin(_COLUMN_RANGES_FIELD_DESC);
       {
         oprot.writeListBegin(new TList(TType.STRUCT, this.column_ranges.length));
-        for (var elem69 in this.column_ranges) {
-          elem69.write(oprot);
+        for (var elem73 in this.column_ranges) {
+          elem73.write(oprot);
         }
         oprot.writeListEnd();
       }
@@ -256,8 +256,8 @@ class TPendingQuery implements TBase {
       oprot.writeFieldBegin(_DICTIONARY_GENERATIONS_FIELD_DESC);
       {
         oprot.writeListBegin(new TList(TType.STRUCT, this.dictionary_generations.length));
-        for (var elem70 in this.dictionary_generations) {
-          elem70.write(oprot);
+        for (var elem74 in this.dictionary_generations) {
+          elem74.write(oprot);
         }
         oprot.writeListEnd();
       }
@@ -267,8 +267,8 @@ class TPendingQuery implements TBase {
       oprot.writeFieldBegin(_TABLE_GENERATIONS_FIELD_DESC);
       {
         oprot.writeListBegin(new TList(TType.STRUCT, this.table_generations.length));
-        for (var elem71 in this.table_generations) {
-          elem71.write(oprot);
+        for (var elem75 in this.table_generations) {
+          elem75.write(oprot);
         }
         oprot.writeListEnd();
       }

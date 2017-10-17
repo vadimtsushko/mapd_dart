@@ -8,7 +8,7 @@ library mapd.src.t_map_d_exception;
 
 import 'dart:typed_data' show Uint8List;
 import 'package:mapd/src/thrift/thrift.dart';
-import '../driver.dart';
+import 'package:mapd/src/driver.dart';
 
 class TMapDException extends Error implements TBase {
   static final TStruct _STRUCT_DESC = new TStruct("TMapDException");
