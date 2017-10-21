@@ -27,21 +27,21 @@ runExample(MapdConnector connector) async {
   var tables = await connector.getTables();
   print('Tables: $tables');
 
-  var fields = await connector.getFields('flights_2008_10k');
-  print('Fields for "tweets_nov_feb" table');
+  var fields = await connector.getFields('flights_2008_7M');
+  print('Fields for "flights_2008_7M" table');
   for (var each in fields) {
     print('   col_name: ${each.col_name}, col_type: ${each.col_type}');
   }
 
   const query =
-      "SELECT carrier_name as key0, AVG(airtime) AS val FROM flights_2008_10k WHERE airtime IS NOT NULL GROUP BY key0 ORDER BY val DESC LIMIT 100";
+      "SELECT carrier_name as key0, AVG(airtime) AS val FROM flights_2008_7M WHERE airtime IS NOT NULL GROUP BY key0 ORDER BY val DESC LIMIT 100";
 
   var success = await connector.validateQuery(query);
 
   print('Validation result: $success');
   try {
     var fail = await connector.validateQuery(
-        "SELECT carrier_name as key0, AVG(airtime32124) AS val FROM flights_2008_10k WHERE airtime IS NOT NULL GROUP BY key0 ORDER BY val DESC LIMIT 100");
+        "SELECT carrier_name as key0, AVG(airtime32124) AS val FROM flights_2008_7M WHERE airtime IS NOT NULL GROUP BY key0 ORDER BY val DESC LIMIT 100");
     print('Validation result 2: $fail');
   } catch (e) {
     print(e);

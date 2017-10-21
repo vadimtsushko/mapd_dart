@@ -69,7 +69,7 @@ class TClientSocketTransport extends TSocketTransport {
   final List<Completer<Uint8List>> _completers = [];
 
   TClientSocketTransport(TSocket socket) : super(socket);
-
+  int counter = 0;
   Future flush() {
     Uint8List bytes = consumeWriteBuffer();
 
@@ -85,6 +85,8 @@ class TClientSocketTransport extends TSocketTransport {
   }
 
   void handleIncomingMessage(Uint8List messageBytes) {
+    print('Message $counter, length: ${messageBytes.length}');
+    counter = counter + 1;
     super.handleIncomingMessage(messageBytes);
 
     if (_completers.isNotEmpty) {
