@@ -12,5 +12,5 @@ main() async {
     ..user = 'mapd'
     ..password = 'HyperInteractive';
 
-  runExample(connector);
+  runExample(connector, null);
 }

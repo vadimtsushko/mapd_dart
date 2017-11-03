@@ -4,13 +4,13 @@ main() async {
 
 //  TProtocol protocol = new TProtocol(transport)
   var connector = new MapdConnectorConsole()
-    ..url = 'http://dev.infovizion.ru:9092'
+    ..url = 'http:/localhost:9092'
     ..dbName = 'mapd'
     ..user = 'mapd'
     ..password = 'HyperInteractive';
 
-
-  runExample(connector);
+  var proxyConnector = new MapdConnectorConsole();
+  runExample(connector, proxyConnector);
 
 //  connector.connect('mapd', 'mapd', 'HyperInteractive');
 }

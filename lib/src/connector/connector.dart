@@ -3,6 +3,7 @@ import 'package:mapd/src/thrift/thrift.dart';
 import 'dart:async';
 import 'package:logging/logging.dart';
 import 'query_result_processing.dart';
+
 class MapdConnector {
   String url;
   String dbName;
@@ -14,6 +15,7 @@ class MapdConnector {
   final logger = new Logger('MapdConnector');
   String password;
   TProtocol _protocol;
+  Stopwatch stopwatch = new Stopwatch();
   MapDClient client;
   MapdConnector({this.url, this.dbName, this.user, this.password});
   initTransport() async {
@@ -40,6 +42,12 @@ class MapdConnector {
     return true;
   }
 
+  Future<bool> connectWithSession(String session) async {
+    this.session = session;
+    await initTransport();
+    return true;
+  }
+
   disconnect() async {
     await client.disconnect(session);
     session = null;
@@ -63,7 +71,6 @@ class MapdConnector {
     return client.get_server_status(session);
   }
 
-
 ///////////// Похоже эти методы не поддерживаются, а жаль
 //  Future<TMemorySummary> getMemorySummary() async {
 //    checkConnection();
@@ -84,7 +91,6 @@ class MapdConnector {
     return client.get_memory(session, memoryLevel);
   }
 
-
   Future<List<String>> getTables() async {
     checkConnection();
     return client.get_tables(session);
@@ -102,15 +108,34 @@ class MapdConnector {
     return res != null;
   }
 
-  query(String query, {bool columnFormat: true, int limit: -1, bool eliminateNullRows: false}) async {
+  Future<List<Map<String, dynamic>>> query(String query,
+      {bool columnFormat: true,
+      int limit: -1,
+      bool eliminateNullRows: false,
+      bool logTiming: false}) async {
+    if (logTiming) {
+      stopwatch.start();
+      print('''Query SQL: 
+      $query''');
+    }
     checkConnection();
     var data = await client.sql_execute(
         session, query, columnFormat, _getNonce(), limit, -1);
-    if (columnFormat) {
-      return processColumnarResults(data, eliminateNullRows);
-    } else {
-      return processRowResults(data, eliminateNullRows);
-    }
+    var duration1 = stopwatch.elapsed;
 
+    List<Map<String, dynamic>> result;
+    if (columnFormat) {
+      result = processColumnarResults(data, eliminateNullRows);
+    } else {
+      result = processRowResults(data, eliminateNullRows);
+    }
+    if (logTiming) {
+      stopwatch.stop();
+      var duration2 = stopwatch.elapsed;
+      print(
+          '${result.length} rows returned. Query time: $duration1, query with postprocessing time: $duration2, mapd reported time: ${data.execution_time_ms}');
+      stopwatch.reset();
+    }
+    return result;
   }
 }

@@ -1,6 +1,6 @@
 import 'package:mapd/common.dart';
 
-runExample(MapdConnector connector) async {
+runExample(MapdConnector connector, MapdConnector proxyConnector) async {
   if (!await connector.connect()) {
     throw new Exception('Error connecting to MapD');
   }
@@ -54,5 +54,12 @@ runExample(MapdConnector connector) async {
     print('    $each');
   }
 
+  if (proxyConnector != null) {
+    print('Query with proxyConnector');
+    await proxyConnector.connectWithSession(connector.session);
+    var queryResult = await proxyConnector.query(query);
+    print('Query: $query returned ${queryResult.length} rows');
+    print('Query result:');
+  }
   await connector.disconnect();
 }
