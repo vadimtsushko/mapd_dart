@@ -3,7 +3,7 @@ authors:
   - Vadim Tsushko <vadimtsushko@gmail.com>
 homepage: https://github.com/vadimtsushko/mapd_dart
 name: "mapd"
-version: "1.0.0"
+version: "1.1.0"
 dependencies:
   fixnum: "^0.10.2"
   http: "^0.11.3"
