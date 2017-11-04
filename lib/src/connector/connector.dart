@@ -43,6 +43,10 @@ class MapdConnector {
   }
 
   Future<bool> connectWithSession(String session) async {
+    if (url == null) {
+      logger.severe("Please enter a url.");
+      return false;
+    }
     this.session = session;
     await initTransport();
     return true;
