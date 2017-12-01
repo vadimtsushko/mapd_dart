@@ -15,7 +15,6 @@ class MapdConnector {
   final logger = new Logger('MapdConnector');
   String password;
   TProtocol _protocol;
-  Stopwatch stopwatch = new Stopwatch();
   MapDClient client;
   MapdConnector({this.url, this.dbName, this.user, this.password});
   initTransport() async {
@@ -115,31 +114,38 @@ class MapdConnector {
   Future<List<Map<String, dynamic>>> query(String query,
       {bool columnFormat: true,
       int limit: -1,
+        int offset: -1,
       bool eliminateNullRows: false,
       bool logTiming: false}) async {
+    Stopwatch stopwatch;
     if (logTiming) {
+    stopwatch = new Stopwatch();
       stopwatch.start();
-      print('''Query SQL: 
-      $query''');
     }
     checkConnection();
-    var data = await client.sql_execute(
-        session, query, columnFormat, _getNonce(), limit, -1);
-    var duration1 = stopwatch.elapsed;
+//    try {
+      var data = await client.sql_execute(
+          session, query, columnFormat, _getNonce(), offset, limit);
 
-    List<Map<String, dynamic>> result;
-    if (columnFormat) {
-      result = processColumnarResults(data, eliminateNullRows);
-    } else {
-      result = processRowResults(data, eliminateNullRows);
-    }
-    if (logTiming) {
-      stopwatch.stop();
-      var duration2 = stopwatch.elapsed;
-      print(
-          '${result.length} rows returned. Query time: $duration1, query with postprocessing time: $duration2, mapd reported time: ${data.execution_time_ms}');
-      stopwatch.reset();
-    }
-    return result;
+
+      List<Map<String, dynamic>> result;
+      if (columnFormat) {
+        result = processColumnarResults(data, eliminateNullRows);
+      } else {
+        result = processRowResults(data, eliminateNullRows);
+      }
+      if (logTiming) {
+        stopwatch.stop();
+        var duration2 = stopwatch.elapsed;
+        print(
+            '----------------------------------\n'
+                '${result
+                .length} rows returned. Browser query time: ${duration2.inMilliseconds}, MapD execution_time_ms: ${data
+                .execution_time_ms}, MapD total_time_ms: ${data
+                .total_time_ms}\n--------\n$query');
+        stopwatch.reset();
+      }
+      return result;
   }
 }
+
