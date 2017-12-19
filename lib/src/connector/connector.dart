@@ -150,10 +150,17 @@ class MapdConnector {
       stopwatch.start();
     }
     checkConnection();
-//    try {
-    var data = await client.sql_execute(
-        session, query, columnFormat, _getNonce(), offset, limit);
-
+    TQueryResult data;
+    try {
+      data = await client.sql_execute(
+          session, query, columnFormat, _getNonce(), offset, limit);
+    } catch (e) {
+      throw new Exception('''
+MapD Exception: $e
+Original query:
+$query            
+      ''');
+    }
     List<Map<String, dynamic>> result;
     if (columnFormat) {
       result = processColumnarResults(data, eliminateNullRows);
